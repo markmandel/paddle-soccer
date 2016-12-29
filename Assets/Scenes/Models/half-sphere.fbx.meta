@@ -24,6 +24,7 @@ ModelImporter:
     4300000: subtract-inner
     4300002: subtract-cube
     4300004: Sphere
+    4300006: Dome
     6400000: Sphere
     6400002: subtract-cube
     6400004: subtract-inner
