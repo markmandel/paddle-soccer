@@ -11,11 +11,14 @@ public class PlayerInput : MonoBehaviour
     [SerializeField] private float mouseSensitivity = 5.0f;
 
     // Lock down the cursor
-    void OnStart()
+    void Start()
     {
-        Debug.Log("Locking cursor?");
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+        // locking inside the editor seems to ruin input
+        if (!Application.isEditor)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
     }
 
     // Handle rotational mouse input
@@ -23,6 +26,13 @@ public class PlayerInput : MonoBehaviour
     {
         float axis = Input.GetAxis("Mouse X");
         transform.Rotate(0, (axis * mouseSensitivity), 0);
+
+        // Disable Mouse cursor locking
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
     }
 
     // Handle forward, left and right
