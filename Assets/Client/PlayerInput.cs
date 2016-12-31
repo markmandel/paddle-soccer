@@ -10,11 +10,13 @@ public class PlayerInput : MonoBehaviour
     // sensitivity of the mouse on the Y axis
     [SerializeField] private float mouseSensitivity = 5.0f;
 
+    // --- Handlers ---
+
     // Lock down the cursor
     void Start()
     {
         // locking inside the editor seems to ruin input
-        if (!Application.isEditor)
+        if(!Application.isEditor)
         {
             Cursor.lockState = CursorLockMode.Locked;
             Cursor.visible = false;
@@ -25,13 +27,25 @@ public class PlayerInput : MonoBehaviour
     void Update()
     {
         float axis = Input.GetAxis("Mouse X");
-        transform.Rotate(0, (axis * mouseSensitivity), 0);
+        float yAngle = axis * mouseSensitivity;
+
+        RotatePlayer(yAngle);
 
         // Disable Mouse cursor locking
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if(Input.GetKeyDown(KeyCode.Escape))
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
+        }
+
+        // Test out rotation
+        if(Input.GetKey(KeyCode.LeftBracket))
+        {
+            RotatePlayer(transform.rotation.y - 5f);
+        }
+        else if(Input.GetKey(KeyCode.RightBracket))
+        {
+            RotatePlayer(transform.rotation.y + 5f);
         }
     }
 
@@ -42,5 +56,13 @@ public class PlayerInput : MonoBehaviour
         float deltaZ = Input.GetAxis("Vertical") * speed;
 
         transform.Translate(deltaX, 0, deltaZ);
+    }
+
+    // --- Custom Functions ---
+
+    private void RotatePlayer(float yAngle)
+    {
+        Debug.Log("Rotate Player: " + yAngle);
+        transform.Rotate(0, yAngle, 0);
     }
 }
