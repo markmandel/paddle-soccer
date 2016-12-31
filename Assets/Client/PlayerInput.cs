@@ -10,6 +10,14 @@ public class PlayerInput : MonoBehaviour
     // sensitivity of the mouse on the Y axis
     [SerializeField] private float mouseSensitivity = 5.0f;
 
+    // Lock down the cursor
+    void OnStart()
+    {
+        Debug.Log("Locking cursor?");
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
     // Handle rotational mouse input
     void Update()
     {
