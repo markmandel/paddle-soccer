@@ -25,6 +25,6 @@ public class CollisionDebug : MonoBehaviour
 
     private void Log(Collision collision, string category)
     {
-        Debug.Log(string.Format("[{0}] Collision {1}: {2}", this.name, category, collision));
+        Debug.Log(string.Format("[{0}] Collision {1}: {2}", name, category, collision));
     }
 }
