@@ -26,9 +26,7 @@ public class PlayerInput : MonoBehaviour
     // Handle rotational mouse input
     void Update()
     {
-        float axis = Input.GetAxis("Mouse X");
-        float yAngle = axis * mouseSensitivity;
-
+        float yAngle = Input.GetAxis("Mouse X") * mouseSensitivity;
         RotatePlayer(yAngle);
 
         // Disable Mouse cursor locking
