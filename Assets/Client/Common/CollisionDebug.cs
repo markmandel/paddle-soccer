@@ -8,23 +8,38 @@ public class CollisionDebug : MonoBehaviour
 
     void OnCollisionEnter(Collision collision)
     {
-        Log(collision, "Enter");
+        Log(collision.gameObject, "Collision Enter");
     }
 
     void OnCollisionExit(Collision collision)
     {
-        Log(collision, "Exit");
+        Log(collision.gameObject, "Collision Exit");
     }
 
     void OnCollisionStay(Collision collision)
     {
-        Log(collision, "Stay");
+        Log(collision.gameObject, "Collision Stay");
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        Log(other.gameObject, "Trigger Enter");
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        Log(other.gameObject, "Trigger Exit");
+    }
+
+    void OnTriggerStay(Collider other)
+    {
+        Log(other.gameObject, "Trigger Stay");
     }
 
     // --- Functions ---
 
-    private void Log(Collision collision, string category)
+    private void Log(GameObject obj, string category)
     {
-        Debug.Log(string.Format("[{0}] Collision {1}: {2}", name, category, collision));
+        Debug.Log(string.Format("[{0}] {1} Event: {2}", name, category, obj.name));
     }
 }
