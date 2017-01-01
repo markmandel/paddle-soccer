@@ -23,8 +23,32 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
-    // Handle rotational mouse input
+    // Handle rotational input
     void Update()
+    {
+        MouseRotationInput();
+        KeyboardRotationInput();
+    }
+
+    // Handle forward, left and right
+    void FixedUpdate()
+    {
+        KeyboardHorizontalInput();
+    }
+
+    // --- Functions ---
+
+    // Keyboard input, for forward, back, left and right
+    private void KeyboardHorizontalInput()
+    {
+        float deltaX = Input.GetAxis("Horizontal") * speed;
+        float deltaZ = Input.GetAxis("Vertical") * speed;
+
+        transform.Translate(deltaX, 0, deltaZ);
+    }
+
+    // Handles rotational movement with the mouse
+    private void MouseRotationInput()
     {
         float yAngle = Input.GetAxis("Mouse X") * mouseSensitivity;
         RotatePlayer(yAngle);
@@ -35,8 +59,11 @@ public class PlayerInput : MonoBehaviour
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
+    }
 
-        // Test out rotation
+    // Handle Keyboard Input for rotation: [ and ]
+    private void KeyboardRotationInput()
+    {
         if(Input.GetKey(KeyCode.LeftBracket))
         {
             RotatePlayer(transform.rotation.y - 5f);
@@ -47,20 +74,8 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
-    // Handle forward, left and right
-    void FixedUpdate()
-    {
-        float deltaX = Input.GetAxis("Horizontal") * speed;
-        float deltaZ = Input.GetAxis("Vertical") * speed;
-
-        transform.Translate(deltaX, 0, deltaZ);
-    }
-
-    // --- Custom Functions ---
-
     private void RotatePlayer(float yAngle)
     {
-        Debug.Log("Rotate Player: " + yAngle);
         transform.Rotate(0, yAngle, 0);
     }
 }
