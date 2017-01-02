@@ -1,39 +1,42 @@
 ﻿using UnityEngine;
 
-// Observable event for when collision triggers occur
-// on isTrigger Collisionable Game Objects
-public class TriggerEventObservable : MonoBehaviour
+namespace Assets.Client.Common
 {
-    public delegate void Triggered(Collider other);
-
-    public event Triggered TriggerEnter;
-    public event Triggered TriggerExit;
-    public event Triggered TriggerStay;
-
-    // Fires TriggerEnter event
-    void OnTriggerEnter(Collider other)
+    // Observable event for when collision triggers occur
+    // on isTrigger Collisionable Game Objects
+    public class TriggerEventObservable : MonoBehaviour
     {
-        if(TriggerEnter != null)
+        public delegate void Triggered(Collider other);
+
+        public event Triggered TriggerEnter;
+        public event Triggered TriggerExit;
+        public event Triggered TriggerStay;
+
+        // Fires TriggerEnter event
+        void OnTriggerEnter(Collider other)
         {
-            TriggerEnter(other);
+            if(TriggerEnter != null)
+            {
+                TriggerEnter(other);
+            }
         }
-    }
 
-    // Fires TriggerExit event
-    void OnTriggerExit(Collider other)
-    {
-        if(TriggerExit != null)
+        // Fires TriggerExit event
+        void OnTriggerExit(Collider other)
         {
-            TriggerExit(other);
+            if(TriggerExit != null)
+            {
+                TriggerExit(other);
+            }
         }
-    }
 
-    // Fires TriggerStay event
-    void OnTriggerStay(Collider other)
-    {
-        if(TriggerStay != null)
+        // Fires TriggerStay event
+        void OnTriggerStay(Collider other)
         {
-            TriggerStay(other);
+            if(TriggerStay != null)
+            {
+                TriggerStay(other);
+            }
         }
     }
 }

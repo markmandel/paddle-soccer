@@ -1,81 +1,84 @@
 ﻿using UnityEngine;
 
-// Moves the Player (paddle and camera) around
-// when using the keyboard
-public class PlayerInput : MonoBehaviour
+namespace Assets.Client.Player
 {
-    // speed of movement, in all directions
-    [SerializeField] private float speed = 0.1f;
-
-    // sensitivity of the mouse on the Y axis
-    [SerializeField] private float mouseSensitivity = 5.0f;
-
-    // --- Handlers ---
-
-    // Lock down the cursor
-    void Start()
+    // Moves the Player (paddle and camera) around
+    // when using the keyboard
+    public class PlayerInput : MonoBehaviour
     {
-        // locking inside the editor seems to ruin input
-        if(!Application.isEditor)
+        // speed of movement, in all directions
+        [SerializeField] private float speed = 0.1f;
+
+        // sensitivity of the mouse on the Y axis
+        [SerializeField] private float mouseSensitivity = 5.0f;
+
+        // --- Handlers ---
+
+        // Lock down the cursor (if not in editor)
+        void Start()
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            // locking inside the editor seems to ruin input
+            if(!Application.isEditor)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
-    }
 
-    // Handle rotational input
-    void Update()
-    {
-        MouseRotationInput();
-        KeyboardRotationInput();
-    }
-
-    // Handle forward, left and right
-    void FixedUpdate()
-    {
-        KeyboardHorizontalInput();
-    }
-
-    // --- Functions ---
-
-    // Keyboard input, for forward, back, left and right
-    private void KeyboardHorizontalInput()
-    {
-        float deltaX = Input.GetAxis("Horizontal") * speed;
-        float deltaZ = Input.GetAxis("Vertical") * speed;
-
-        transform.Translate(deltaX, 0, deltaZ);
-    }
-
-    // Handles rotational movement with the mouse
-    private void MouseRotationInput()
-    {
-        float yAngle = Input.GetAxis("Mouse X") * mouseSensitivity;
-        RotatePlayer(yAngle);
-
-        // Disable Mouse cursor locking
-        if(Input.GetKeyDown(KeyCode.Escape))
+        // Handle rotational input
+        void Update()
         {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
+            MouseRotationInput();
+            KeyboardRotationInput();
         }
-    }
 
-    // Handle Keyboard Input for rotation: [ and ]
-    private void KeyboardRotationInput()
-    {
-        if(Input.GetKey(KeyCode.LeftBracket))
+        // Handle forward, left and right
+        void FixedUpdate()
         {
-            RotatePlayer(transform.rotation.y - 5f);
+            KeyboardHorizontalInput();
         }
-        else if(Input.GetKey(KeyCode.RightBracket))
-        {
-            RotatePlayer(transform.rotation.y + 5f);
-        }
-    }
 
-    private void RotatePlayer(float yAngle)
-    {
-        transform.Rotate(0, yAngle, 0);
+        // --- Functions ---
+
+        // Keyboard input, for forward, back, left and right
+        private void KeyboardHorizontalInput()
+        {
+            float deltaX = Input.GetAxis("Horizontal") * speed;
+            float deltaZ = Input.GetAxis("Vertical") * speed;
+
+            transform.Translate(deltaX, 0, deltaZ);
+        }
+
+        // Handles rotational movement with the mouse
+        private void MouseRotationInput()
+        {
+            float yAngle = Input.GetAxis("Mouse X") * mouseSensitivity;
+            RotatePlayer(yAngle);
+
+            // Disable Mouse cursor locking
+            if(Input.GetKeyDown(KeyCode.Escape))
+            {
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+        }
+
+        // Handle Keyboard Input for rotation: [ and ]
+        private void KeyboardRotationInput()
+        {
+            if(Input.GetKey(KeyCode.LeftBracket))
+            {
+                RotatePlayer(transform.rotation.y - 5f);
+            }
+            else if(Input.GetKey(KeyCode.RightBracket))
+            {
+                RotatePlayer(transform.rotation.y + 5f);
+            }
+        }
+
+        private void RotatePlayer(float yAngle)
+        {
+            transform.Rotate(0, yAngle, 0);
+        }
     }
 }

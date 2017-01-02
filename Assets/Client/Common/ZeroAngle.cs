@@ -1,14 +1,16 @@
 ﻿using UnityEngine;
 
-
-// Zero outs the angle on each update, to make sure
-// the GameObject always faces the same direction
-public class ZeroAngle : MonoBehaviour {
-
-	// Update is called once per frame
-    void Update()
+namespace Assets.Client.Common
+{
+    // Zero outs the angle on each update, to make sure
+    // the GameObject always faces the same direction
+    public class ZeroAngle : MonoBehaviour
     {
-        // fixes some weird bug in the rotation
-        transform.localEulerAngles = Vector3.zero;
+        // Update is called once per frame
+        void Update()
+        {
+            // fixes a weird issue I was having with paddle rotation
+            transform.localEulerAngles = Vector3.zero;
+        }
     }
 }
