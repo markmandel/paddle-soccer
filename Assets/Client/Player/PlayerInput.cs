@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using Assets.Client.Common;
+using UnityEngine;
 
 namespace Assets.Client.Player
 {
@@ -12,17 +14,33 @@ namespace Assets.Client.Player
         // sensitivity of the mouse on the Y axis
         [SerializeField] private float mouseSensitivity = 5.0f;
 
+        private TriggerEventObservable triggerEventObservable;
+
+        // if this true, then player isn't going to move around
+        private Boolean stop = false;
+
         // --- Handlers ---
 
-        // Lock down the cursor (if not in editor)
+
         void Start()
         {
-            // locking inside the editor seems to ruin input
-            if(!Application.isEditor)
+            triggerEventObservable = GetComponentInChildren<TriggerEventObservable>();
+            if(triggerEventObservable == null)
             {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                throw new Exception("One of the player input children should have a TriggerEventObservable");
             }
+
+            triggerEventObservable.TriggerEnter += TriggerEnter;
+            triggerEventObservable.TriggerExit += TriggerExit;
+
+            LockCursor();
+        }
+
+        // remove listeners
+        void OnDestroy()
+        {
+            triggerEventObservable.TriggerEnter -= TriggerEnter;
+            triggerEventObservable.TriggerExit -= TriggerExit;
         }
 
         // Handle rotational input
@@ -40,13 +58,27 @@ namespace Assets.Client.Player
 
         // --- Functions ---
 
+        // Lock down the cursor (if not in editor)
+        private static void LockCursor()
+        {
+            // locking inside the editor seems to ruin input
+            if(!Application.isEditor)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
+        }
+
         // Keyboard input, for forward, back, left and right
         private void KeyboardHorizontalInput()
         {
-            float deltaX = Input.GetAxis("Horizontal") * speed;
-            float deltaZ = Input.GetAxis("Vertical") * speed;
+            if(!stop)
+            {
+                float deltaX = Input.GetAxis("Horizontal") * speed;
+                float deltaZ = Input.GetAxis("Vertical") * speed;
 
-            transform.Translate(deltaX, 0, deltaZ);
+                transform.Translate(deltaX, 0, deltaZ);
+            }
         }
 
         // Handles rotational movement with the mouse
@@ -79,6 +111,24 @@ namespace Assets.Client.Player
         private void RotatePlayer(float yAngle)
         {
             transform.Rotate(0, yAngle, 0);
+        }
+
+        private void TriggerEnter(Collider other)
+        {
+            if(other.tag == "StopPlayer")
+            {
+                Debug.Log(String.Format("Player input has entered: {0} / {1}", other.name, other.tag));
+                stop = true;
+            }
+        }
+
+        private void TriggerExit(Collider other)
+        {
+            if(other.tag == "StopPlayer")
+            {
+                Debug.Log(String.Format("Player input has exit: {0} / {1}", other.name, other.tag));
+                stop = false;
+            }
         }
     }
 }
