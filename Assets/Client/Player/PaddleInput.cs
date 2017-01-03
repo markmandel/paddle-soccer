@@ -49,16 +49,9 @@ namespace Client.Player
             // skip this whole thing, if there is no input
             if(!(deltaX == 0 && deltaY == 0))
             {
-                Vector3 targetVelocity = new Vector3(deltaX, 0, deltaY);
-                Debug.Log(string.Format("[1] Local Input Velocity: {0}", targetVelocity));
-
+                Vector3 targetVelocity = new Vector3(deltaX, 0, deltaY) * speed;
                 // convert from local to world
                 targetVelocity = transform.TransformDirection(targetVelocity);
-                Debug.Log(string.Format("[2] World Input Velocity: {0}", targetVelocity));
-
-                targetVelocity *= speed;
-
-                Debug.Log(string.Format("[3] World Speed Input Velocity: {0}", targetVelocity));
 
                 // Apply a force, to reach the target velocity
                 Vector3 currentVelocity = rb.velocity;
