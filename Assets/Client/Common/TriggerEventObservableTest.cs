@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace Assets.Client.Common
+namespace Client.Common
 {
     [TestFixture]
     public class TriggerEventObservableTest

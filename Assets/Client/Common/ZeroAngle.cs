@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Client.Common
+namespace Client.Common
 {
     // Zero outs the angle on each update, to make sure
     // the GameObject always faces the same direction

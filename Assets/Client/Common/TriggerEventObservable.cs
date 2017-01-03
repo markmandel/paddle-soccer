@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Client.Common
+namespace Client.Common
 {
     // Observable event for when collision triggers occur
     // on isTrigger Collisionable Game Objects

@@ -1,8 +1,6 @@
-﻿using System;
-using System.Security.Cryptography;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace Assets.Client.Player
+namespace Client.Player
 {
     // Moves the paddle around!
     [RequireComponent(typeof(Rigidbody))]
@@ -40,7 +38,7 @@ namespace Assets.Client.Player
         // Mesh renderer. - if you hit it, bounce it back!
         void OnCollisionEnter(Collision collision)
         {
-            if(collision.gameObject.tag == "StopPlayer")
+            if(collision.gameObject.CompareTag("StopPlayer"))
             {
                 Debug.Log("Bouncing!!!");
                 rb.AddForce(-1 * rb.mass * rb.velocity, ForceMode.Impulse);

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Client.Common
+namespace Client.Common
 {
     // Simply writes out to console when a collision
     // occurs, and tells you with what.

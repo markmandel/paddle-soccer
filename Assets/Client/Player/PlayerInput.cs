@@ -1,8 +1,8 @@
 ﻿using System;
-using Assets.Client.Common;
+using Client.Common;
 using UnityEngine;
 
-namespace Assets.Client.Player
+namespace Client.Player
 {
     // Moves the Player (paddle and camera) around
     // when using the keyboard
