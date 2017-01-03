@@ -31,7 +31,6 @@ namespace Client.Player
         {
             if(collision.gameObject.CompareTag("StopPlayer"))
             {
-                Debug.Log("Bouncing!!!");
                 rb.AddForce(-1 * rb.mass * rb.velocity, ForceMode.Impulse);
             }
         }
