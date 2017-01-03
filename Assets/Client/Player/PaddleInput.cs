@@ -7,16 +7,8 @@ namespace Client.Player
     public class PaddleInput : MonoBehaviour
     {
         [SerializeField]
-        [Tooltip("Force to be applied at movement")]
-        private float force = 50f;
-
-        [SerializeField]
-        [Tooltip("Drag to slow down to when not using input")]
-        private float slowDrag = 5f;
-
-        [SerializeField]
-        [Tooltip("Maximum velocity")]
-        private float maxSpeed = 10f;
+        [Tooltip("Speed of movement")]
+        private float speed = 10f;
 
         private Rigidbody rb;
 
@@ -24,7 +16,6 @@ namespace Client.Player
 
         void Start()
         {
-            Debug.Log("Starting Paddle Input!");
             rb = GetComponent<Rigidbody>();
         }
 
@@ -47,24 +38,32 @@ namespace Client.Player
 
         // --- Functions ---
 
+        // Basically work out what speed and direction we *want* to be
+        // going in, and provide a force that will do such a thing
+        // Credit and inspiration from: http://wiki.unity3d.com/index.php?title=RigidbodyFPSWalker
         private void KeyboardHorizontalInput()
         {
-            float deltaX = Input.GetAxis("Horizontal") * force;
-            float deltaZ = Input.GetAxis("Vertical") * force;
+            float deltaX = Input.GetAxis("Horizontal");
+            float deltaY = Input.GetAxis("Vertical");
 
-            if(deltaX != 0f || deltaZ != 0f)
+            // skip this whole thing, if there is no input
+            if(!(deltaX == 0 && deltaY == 0))
             {
-                rb.drag = 0;
-                if(rb.velocity.magnitude < maxSpeed)
-                {
-                    Vector3 translate = new Vector3(deltaX, 0, deltaZ);
-                    rb.AddRelativeForce(translate, ForceMode.Force);
-                }
-            }
-            else
-            {
-                rb.drag = slowDrag;
-                //rb.velocity = Vector3.zero;
+                Vector3 targetVelocity = new Vector3(deltaX, 0, deltaY);
+                Debug.Log(string.Format("[1] Local Input Velocity: {0}", targetVelocity));
+
+                // convert from local to world
+                targetVelocity = transform.TransformDirection(targetVelocity);
+                Debug.Log(string.Format("[2] World Input Velocity: {0}", targetVelocity));
+
+                targetVelocity *= speed;
+
+                Debug.Log(string.Format("[3] World Speed Input Velocity: {0}", targetVelocity));
+
+                // Apply a force, to reach the target velocity
+                Vector3 currentVelocity = rb.velocity;
+                Vector3 delta = targetVelocity - currentVelocity;
+                rb.AddForce(delta, ForceMode.VelocityChange);
             }
         }
     }
