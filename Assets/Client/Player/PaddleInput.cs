@@ -8,7 +8,7 @@ namespace Assets.Client.Player
     public class PaddleInput : MonoBehaviour
     {
         // speed of movement, in all directions
-        [SerializeField] private float speed = 5f;
+        [SerializeField] private float speed = 50f;
 
         private Rigidbody rb;
 
@@ -26,6 +26,15 @@ namespace Assets.Client.Player
             KeyboardHorizontalInput();
         }
 
+        void OnCollisionEnter(Collision collision)
+        {
+            if(collision.gameObject.tag == "StopPlayer")
+            {
+                Debug.Log("Bouncing!!!");
+                rb.AddForce(-2 * rb.velocity, ForceMode.Impulse);
+            }
+        }
+
         // --- Functions ---
 
         private void KeyboardHorizontalInput()
@@ -36,7 +45,8 @@ namespace Assets.Client.Player
             if(Math.Abs(deltaZ + deltaX) > 0)
             {
                 Vector3 translate = new Vector3(deltaX, 0, deltaZ);
-                rb.MovePosition(rb.position + translate * Time.deltaTime);
+                //rb.MovePosition(rb.position + translate * Time.deltaTime);
+                rb.AddRelativeForce(translate, ForceMode.Force);
             }
         }
     }
