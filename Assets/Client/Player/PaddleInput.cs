@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography;
 using UnityEngine;
 
 namespace Assets.Client.Player
@@ -7,8 +8,17 @@ namespace Assets.Client.Player
     [RequireComponent(typeof(Rigidbody))]
     public class PaddleInput : MonoBehaviour
     {
-        // speed of movement, in all directions
-        [SerializeField] private float speed = 50f;
+        [SerializeField]
+        [Tooltip("Force to be applied at movement")]
+        private float force = 50f;
+
+        [SerializeField]
+        [Tooltip("Drag to slow down to when not using input")]
+        private float slowDrag = 5f;
+
+        [SerializeField]
+        [Tooltip("Maximum velocity")]
+        private float maxSpeed = 10f;
 
         private Rigidbody rb;
 
@@ -26,12 +36,14 @@ namespace Assets.Client.Player
             KeyboardHorizontalInput();
         }
 
+        // This is to deal with some issues with the
+        // Mesh renderer. - if you hit it, bounce it back!
         void OnCollisionEnter(Collision collision)
         {
             if(collision.gameObject.tag == "StopPlayer")
             {
                 Debug.Log("Bouncing!!!");
-                rb.AddForce(-2 * rb.velocity, ForceMode.Impulse);
+                rb.AddForce(-1 * rb.mass * rb.velocity, ForceMode.Impulse);
             }
         }
 
@@ -39,14 +51,22 @@ namespace Assets.Client.Player
 
         private void KeyboardHorizontalInput()
         {
-            float deltaX = Input.GetAxis("Horizontal") * speed;
-            float deltaZ = Input.GetAxis("Vertical") * speed;
+            float deltaX = Input.GetAxis("Horizontal") * force;
+            float deltaZ = Input.GetAxis("Vertical") * force;
 
-            if(Math.Abs(deltaZ + deltaX) > 0)
+            if(deltaX != 0f || deltaZ != 0f)
             {
-                Vector3 translate = new Vector3(deltaX, 0, deltaZ);
-                //rb.MovePosition(rb.position + translate * Time.deltaTime);
-                rb.AddRelativeForce(translate, ForceMode.Force);
+                rb.drag = 0;
+                if(rb.velocity.magnitude < maxSpeed)
+                {
+                    Vector3 translate = new Vector3(deltaX, 0, deltaZ);
+                    rb.AddRelativeForce(translate, ForceMode.Force);
+                }
+            }
+            else
+            {
+                rb.drag = slowDrag;
+                //rb.velocity = Vector3.zero;
             }
         }
     }
