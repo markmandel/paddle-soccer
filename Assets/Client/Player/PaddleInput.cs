@@ -12,7 +12,7 @@ namespace Client.Player
 
         [SerializeField]
         [Tooltip("Speed of rotation by mouse")]
-        private float rotationalSpeed = 1f;
+        private float rotationalSpeed = 5f;
 
         private Rigidbody rb;
 
@@ -21,6 +21,12 @@ namespace Client.Player
         void Start()
         {
             rb = GetComponent<Rigidbody>();
+
+            if(!Application.isEditor)
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+            }
         }
 
         // Handle forward, left and right
@@ -28,7 +34,7 @@ namespace Client.Player
         {
             KeyboardHorizontalInput();
 
-            float axis = Input.GetAxis("Mouse X");
+            float axis = Input.GetAxis("Mouse X") * rotationalSpeed;
             Quaternion rotation = Quaternion.Euler(0, transform.localEulerAngles.y + axis, 0);
             rb.MoveRotation(rotation);
         }
