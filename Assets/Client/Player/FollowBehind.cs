@@ -16,12 +16,18 @@ namespace Client.Player
         {
             if(target != null)
             {
-                float y = transform.position.y;
-                Vector3 diff = new Vector3(0, 0, distance);
-                diff = target.TransformDirection(diff);
+                // maintain the y position
+                float yPosition = transform.position.y;
+                // maintain the x rotation
+                float xRotation = transform.localEulerAngles.x;
+
+                Vector3 diff = target.forward * distance;
                 diff = target.position - diff;
-                diff.Set(diff.x, y, diff.z);
+                diff.Set(diff.x, yPosition, diff.z);
                 transform.position = diff;
+
+                transform.LookAt(target);
+                transform.rotation = Quaternion.Euler(xRotation, transform.localEulerAngles.y, transform.localEulerAngles.z);
             }
         }
     }

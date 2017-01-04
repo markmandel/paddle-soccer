@@ -7,8 +7,12 @@ namespace Client.Player
     public class PaddleInput : MonoBehaviour
     {
         [SerializeField]
-        [Tooltip("Speed of movement")]
-        private float speed = 10f;
+        [Tooltip("Speed of horizontal movement")]
+        private float horizontalSpeed = 10f;
+
+        [SerializeField]
+        [Tooltip("Speed of rotation by mouse")]
+        private float rotationalSpeed = 1f;
 
         private Rigidbody rb;
 
@@ -23,6 +27,10 @@ namespace Client.Player
         void FixedUpdate()
         {
             KeyboardHorizontalInput();
+
+            float axis = Input.GetAxis("Mouse X");
+            Quaternion rotation = Quaternion.Euler(0, transform.localEulerAngles.y + axis, 0);
+            rb.MoveRotation(rotation);
         }
 
         // This is to deal with some issues with the
@@ -48,7 +56,7 @@ namespace Client.Player
             // skip this whole thing, if there is no input
             if(!(deltaX == 0 && deltaY == 0))
             {
-                Vector3 targetVelocity = new Vector3(deltaX, 0, deltaY) * speed;
+                Vector3 targetVelocity = new Vector3(deltaX, 0, deltaY) * horizontalSpeed;
                 // convert from local to world
                 targetVelocity = transform.TransformDirection(targetVelocity);
 
