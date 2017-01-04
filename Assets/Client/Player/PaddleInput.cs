@@ -28,6 +28,10 @@ namespace Client.Player
         [Tooltip("Clamp for kick magnitude")]
         private float kickMagnitude = 50f;
 
+        [SerializeField]
+        [Tooltip("How much to rotate when using the keyboard input")]
+        private float keyboardRotation = 0.5f;
+
         private Rigidbody rb;
         private BoxCollider box;
 
@@ -74,7 +78,8 @@ namespace Client.Player
         private void FixedUpdate()
         {
             KeyboardHorizontalInput();
-            MouseRotation();
+            PlayerRotation(Input.GetAxis("Mouse X"));
+            KeyboardRotation();
         }
 
         // This is to deal with some issues with the
@@ -111,11 +116,23 @@ namespace Client.Player
             }
         }
 
-        private void MouseRotation()
+        private void PlayerRotation(float axis)
         {
-            float axis = Input.GetAxis("Mouse X") * rotationalSpeed;
+            axis = axis * rotationalSpeed;
             Quaternion rotation = Quaternion.Euler(0, transform.localEulerAngles.y + axis, 0);
             rb.MoveRotation(rotation);
+        }
+
+        private void KeyboardRotation()
+        {
+            if(Input.GetKey(KeyCode.LeftBracket))
+            {
+                PlayerRotation(-keyboardRotation);
+            }
+            if(Input.GetKey(KeyCode.RightBracket))
+            {
+                PlayerRotation(keyboardRotation);
+            }
         }
     }
 }
