@@ -120,27 +120,14 @@ namespace Client.Player
 
         private void KickBall()
         {
-            Debug.Log("Attempting Kick!");
-
             Vector3 diff = new Vector3(0, box.size.y / kickAngle, 0);
-            diff = transform.TransformVector(diff);
-
-            //Vector3 origin = new Vector3(transform.position.x, transform.position.y - (box.size.y / 4f),
-            //    transform.position.z);
-
-            Vector3 origin = transform.position - diff;
-            Debug.Log(string.Format("Current Position: {0}, origin position: {1}", transform.position, origin));
+            Vector3 origin = transform.position - transform.TransformVector(diff);
 
             RaycastHit hit;
-
-            Debug.DrawRay(origin, transform.forward, Color.red, 20f);
-            Debug.Log(string.Format("Width is: {0}", box.size.x));
             if(Physics.Raycast(origin, transform.forward, out hit, kickDistance))
             {
-                Debug.Log(string.Format("Hit: {0}", hit.collider.name));
                 if(hit.collider.name == "Ball")
                 {
-                    Debug.Log("KICK BALL!");
                     Rigidbody crb = hit.collider.GetComponent<Rigidbody>();
                     Vector3 force = -kickForce * hit.normal;
                     crb.AddForceAtPosition(force, hit.point, ForceMode.Impulse);
