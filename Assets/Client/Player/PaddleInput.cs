@@ -18,7 +18,7 @@ namespace Client.Player
 
         [SerializeField]
         [Tooltip("How hard to kick the ball")]
-        private float kickForce = 15f;
+        private float kickForce = 20f;
 
         [SerializeField]
         [Tooltip("Distance the paddle can kick from")]
@@ -27,6 +27,10 @@ namespace Client.Player
         [SerializeField]
         [Tooltip("How much to rotate when using the keyboard input")]
         private float keyboardRotation = 0.5f;
+
+        [SerializeField]
+        [Tooltip("How far down to the bottom to kick. 2f is the bottom.")]
+        private float kickAngle = 2.7f;
 
         private Rigidbody rb;
         private BoxCollider box;
@@ -118,7 +122,7 @@ namespace Client.Player
         {
             Debug.Log("Attempting Kick!");
 
-            Vector3 diff = new Vector3(0, box.size.y / 3f, 0);
+            Vector3 diff = new Vector3(0, box.size.y / kickAngle, 0);
             diff = transform.TransformVector(diff);
 
             //Vector3 origin = new Vector3(transform.position.x, transform.position.y - (box.size.y / 4f),
