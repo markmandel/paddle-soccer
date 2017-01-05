@@ -1,5 +1,4 @@
-﻿using Microsoft.Win32;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Client.Player
 {
@@ -41,12 +40,6 @@ namespace Client.Player
         {
             rb = GetComponent<Rigidbody>();
             box = GetComponent<BoxCollider>();
-
-            if(!Application.isEditor)
-            {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
         }
 
         private void Update()
