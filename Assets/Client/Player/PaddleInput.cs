@@ -58,16 +58,6 @@ namespace Client.Player
             KeyboardRotation();
         }
 
-        // This is to deal with some issues with the
-        // Mesh renderer. - if you hit it, bounce it back!
-        private void OnCollisionEnter(Collision collision)
-        {
-            if(collision.gameObject.CompareTag("StopPlayer"))
-            {
-                rb.AddForce(-1 * rb.mass * rb.velocity, ForceMode.Impulse);
-            }
-        }
-
         // --- Functions ---
 
         // Basically work out what speed and direction we *want* to be
