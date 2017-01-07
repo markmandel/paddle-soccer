@@ -12,6 +12,7 @@ ModelImporter:
     100008: Camera
     100010: Dome
     100012: Lamp
+    100014: Cube
     400000: //RootNode
     400002: Sphere
     400004: subtract-cube
@@ -19,25 +20,30 @@ ModelImporter:
     400008: Camera
     400010: Dome
     400012: Lamp
+    400014: Cube
     2300000: Sphere
     2300002: subtract-cube
     2300004: subtract-inner
     2300006: //RootNode
     2300008: Dome
+    2300010: Cube
     3300000: Sphere
     3300002: subtract-cube
     3300004: subtract-inner
     3300006: //RootNode
     3300008: Dome
+    3300010: Cube
     4300000: subtract-inner
     4300002: subtract-cube
     4300004: Sphere
     4300006: Dome
+    4300008: Cube
     6400000: Sphere
     6400002: subtract-cube
     6400004: subtract-inner
     6400006: //RootNode
     6400008: Dome
+    6400010: Cube
   materials:
     importMaterials: 1
     materialName: 0
