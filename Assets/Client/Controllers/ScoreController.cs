@@ -1,5 +1,6 @@
 ﻿using System;
 using Client.Common;
+using Client.Game;
 using UnityEngine;
 
 namespace Client.Controllers
@@ -7,9 +8,8 @@ namespace Client.Controllers
     // Manages the score for both players
     public class ScoreController : MonoBehaviour
     {
-        private static readonly string PlayerOneGoal = "/Soccerfield/PlayerGoal.1";
-        private static readonly string PlayerTwoGoal = "/Soccerfield/PlayerGoal.2";
-        private static readonly string Ball = "Ball";
+        public static readonly string PlayerOneGoal = "/Soccerfield/PlayerGoal.1";
+        public static readonly string PlayerTwoGoal = "/Soccerfield/PlayerGoal.2";
 
         private int playerOneScore;
         private int playerTwoScore;
@@ -38,7 +38,7 @@ namespace Client.Controllers
         {
             return collider =>
             {
-                if(collider.name == Ball)
+                if(collider.name == Ball.Name)
                 {
                     action(collider);
                 }

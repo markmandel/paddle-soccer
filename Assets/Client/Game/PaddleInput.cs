@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Client.Player
+namespace Client.Game
 {
     // Moves the paddle around!
     [RequireComponent(typeof(Rigidbody))]
@@ -109,7 +109,7 @@ namespace Client.Player
             RaycastHit hit;
             if(Physics.Raycast(origin, transform.forward, out hit, kickDistance))
             {
-                if(hit.collider.name == "Ball")
+                if(hit.collider.name == Ball.Name)
                 {
                     Rigidbody crb = hit.collider.GetComponent<Rigidbody>();
                     Vector3 force = -kickForce * hit.normal;
