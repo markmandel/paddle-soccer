@@ -1,4 +1,5 @@
 ﻿using System;
+using Client.Common;
 using Client.Game;
 using UnityEngine;
 
@@ -23,6 +24,12 @@ namespace Client.Controllers
             }
 
             CreateBall();
+
+            var p1Goal = Goals.FindPlayerOneGoal().GetComponent<TriggerObservable>();
+            var p2Goal = Goals.FindPlayerTwoGoal().GetComponent<TriggerObservable>();
+
+            p1Goal.TriggerEnter += OnGoal;
+            p2Goal.TriggerEnter += OnGoal;
         }
 
 
@@ -35,9 +42,14 @@ namespace Client.Controllers
             {
                 Destroy(currentBall);
             }
-
             currentBall = Instantiate(prefabBall);
             currentBall.name = Ball.Name;
         }
+
+        private void OnGoal(Collider _)
+        {
+            Invoke("CreateBall", 5);
+        }
+
     }
 }
