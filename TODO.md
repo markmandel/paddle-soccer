@@ -1,6 +1,5 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Build pipeline to create headless version, and linux client
 - Spawn each player when connecting to the game
 - Spawn the ball once the players are connected
 - Track scores once the go through the goal area (on screen)
