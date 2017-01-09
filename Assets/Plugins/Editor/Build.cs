@@ -9,23 +9,30 @@ namespace Plugins.Editor
         public static void BuildGameAndServer()
         {
             Debug.Log("Building the game client...");
+            var originalName = PlayerSettings.productName;
 
-            var options = new BuildPlayerOptions();
-            options.scenes = new string[] {"Assets/Scenes/SoccerField.unity"};
-            options.locationPathName = "Builds/Linux/Game.x86_64";
-            options.target = BuildTarget.StandaloneLinux64;
-            options.options = BuildOptions.None;
+            try
+            {
+                PlayerSettings.productName = originalName + "-client";
+                var options = new BuildPlayerOptions();
+                options.scenes = new string[] {"Assets/Scenes/SoccerField.unity"};
+                options.locationPathName = "Builds/Linux/Game.x86_64";
+                options.target = BuildTarget.StandaloneLinux64;
+                options.options = BuildOptions.None;
+                BuildPipeline.BuildPlayer(options);
 
-            BuildPipeline.BuildPlayer(options);
+                Debug.Log("Building server...");
 
-            options.locationPathName = "Builds/Linux/Server.x86_64";
-            options.options = BuildOptions.EnableHeadlessMode;
-
-            Debug.Log("Building server...");
-
-            BuildPipeline.BuildPlayer(options);
-
-            Debug.Log("Building Complete!");
+                PlayerSettings.productName = originalName + "-server";
+                options.locationPathName = "Builds/Linux/Server.x86_64";
+                options.options = BuildOptions.EnableHeadlessMode;
+                BuildPipeline.BuildPlayer(options);
+                Debug.Log("Building Complete!");
+            }
+            finally
+            {
+                PlayerSettings.productName = originalName;
+            }
         }
     }
 }

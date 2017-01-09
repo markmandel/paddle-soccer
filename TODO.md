@@ -1,7 +1,9 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Spawn each player when connecting to the game
-- Spawn the ball once the players are connected
+- Move the ScoreController to being server side.
+- Make the camera follow the player on spawn.
+- Make Kicking the ball a RPC call
+- Spawn the second player
 - Track scores once the go through the goal area (on screen)
 - Show "GOAL" when a goal happens
 - Make it so a player can't go into the goal area
