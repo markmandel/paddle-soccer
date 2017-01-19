@@ -11,6 +11,8 @@ namespace Server
     /// </summary>
     public class GameServer
     {
+        private static readonly int playersNeededForGame = 2;
+
         /// <summary>
         /// Delegate for when two players have joined the game
         /// </summary>
@@ -87,7 +89,7 @@ namespace Server
             Debug.LogFormat("[GameNetwork] Client #{0} Connected", Instance.connCount);
 
             // only two players are allowed
-            if (Instance.connCount > 2)
+            if (Instance.connCount > playersNeededForGame)
             {
                 conn.Disconnect();
             }
@@ -101,7 +103,7 @@ namespace Server
         {
             Debug.LogFormat("[GameNetwork] Adding Player {0}", playerCount);
 
-            if (playerCount == 1 && OnGameReady != null)
+            if (playerCount == playersNeededForGame && OnGameReady != null)
             {
                 Debug.Log("[GameNetwork] Firing on game ready!");
                 OnGameReady();

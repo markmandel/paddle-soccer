@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Client.Game
+namespace Client
 {
     // Follows at a distance behind a specified gameobject
     public class FollowBehind : MonoBehaviour

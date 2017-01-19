@@ -1,12 +1,13 @@
 ﻿using Game;
 using UnityEngine;
+using UnityEngine.Networking;
 
-namespace Client.Game
+namespace Client
 {
     // Moves the paddle around!
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(BoxCollider))]
-    public class PaddleInput : MonoBehaviour
+    public class PaddleInput : NetworkBehaviour
     {
         [SerializeField]
         [Tooltip("Speed of horizontal movement")]
@@ -45,18 +46,24 @@ namespace Client.Game
 
         private void Update()
         {
-            if(Input.GetKeyDown(KeyCode.Space) || Input.GetButtonDown("Fire1"))
+            if (isLocalPlayer)
             {
-                KickBall();
+                if(Input.GetKeyDown(KeyCode.Space) || Input.GetButtonDown("Fire1"))
+                {
+                    KickBall();
+                }
             }
         }
 
         // Handle forward, left and right
         private void FixedUpdate()
         {
-            KeyboardHorizontalInput();
-            PlayerRotation(Input.GetAxis("Mouse X"));
-            KeyboardRotation();
+            if (isLocalPlayer)
+            {
+                KeyboardHorizontalInput();
+                PlayerRotation(Input.GetAxis("Mouse X"));
+                KeyboardRotation();
+            }
         }
 
         // --- Functions ---
