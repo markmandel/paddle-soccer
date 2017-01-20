@@ -57,7 +57,7 @@ namespace Server
             if (instance == null)
             {
                 instance = new GameServer {server = server};
-                if (!server.StartServer())
+                if (!Instance.server.StartServer())
                 {
                     instance = null;
                     throw new Exception("Error starting server");

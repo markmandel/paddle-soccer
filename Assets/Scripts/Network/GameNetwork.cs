@@ -1,10 +1,11 @@
-﻿using UnityEngine;
+﻿using Client;
+using UnityEngine;
 using UnityEngine.Networking;
 using Server;
 
 namespace Network
 {
-    public class GameNetwork : NetworkManager, IUnityServer
+    public class GameNetwork : NetworkManager, IUnityServer, IUnityClient
     {
         public readonly string Version = "0.2";
 
@@ -28,7 +29,7 @@ namespace Network
             else
             {
                 Debug.Log("[GameNetwork] Starting Client");
-                StartClient();
+                GameClient.Start(this, System.Environment.GetCommandLineArgs());
             }
         }
 
@@ -52,5 +53,17 @@ namespace Network
         }
 
         // --- Client Commands ---
+
+        /// <summary>
+        /// Change the Server Host settings from the default
+        /// as set in the Unity editor.
+        /// </summary>
+        /// <param name="host">The server host</param>
+        /// <param name="port">The port to use</param>
+        public void SetHost(string host, int port)
+        {
+            networkAddress = host;
+            networkPort = port;
+        }
     }
 }

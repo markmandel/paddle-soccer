@@ -65,7 +65,8 @@ namespace Tests.Editor.Server
             var fixtures = new List<AddPlayerFixure>
             {
                 new AddPlayerFixure(0, false),
-                new AddPlayerFixure(1, true)
+                new AddPlayerFixure(1, false),
+                new AddPlayerFixure(2, true)
             };
 
             fixtures.ForEach(x =>
