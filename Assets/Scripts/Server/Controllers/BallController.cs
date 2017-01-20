@@ -29,10 +29,10 @@ namespace Server.Controllers
         // --- Messages ---
 
         /// <summary>
-        /// Registers prefabs, and if server, will listen for the OnPlayerReadyEvent
+        /// Make sure there is a ball prefab
         /// </summary>
         /// <exception cref="Exception">If the prefab is null, throws an exception</exception>
-        private void Awake()
+        private void OnValidate()
         {
             if (prefabBall == null)
             {

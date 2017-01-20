@@ -15,7 +15,7 @@ namespace Plugins.Editor
             {
                 PlayerSettings.productName = originalName + "-client";
                 var options = new BuildPlayerOptions();
-                options.scenes = new string[] {"Assets/Scenes/SoccerField.unity"};
+                options.scenes = new[] {"Assets/Scenes/SoccerField.unity"};
                 options.locationPathName = "Builds/Linux/Game.x86_64";
                 options.target = BuildTarget.StandaloneLinux64;
                 options.options = BuildOptions.None;
