@@ -1,6 +1,9 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Make the camera follow the player on spawn.
+- Push the docker container up to gcr.io- Create a Kubernetes cluster
+- Run the game in a pod, on port 7777 and test connection
+- Make the port dynamic
+- Create a simple matchmaker
 - Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.
 - Spawn the second player

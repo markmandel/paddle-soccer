@@ -5,7 +5,7 @@ namespace Plugins.Editor
 {
     public class Build
     {
-        [MenuItem("Tools/Build Game and Server &x")]
+        [MenuItem("Build/Build Game and Server &x")]
         public static void BuildGameAndServer()
         {
             Debug.Log("Building the game client...");
