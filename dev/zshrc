@@ -1,0 +1,31 @@
+# Path to your oh-my-zsh configuration.
+ZSH=/oh-my-zsh
+
+# Set name of the theme to load.
+# Look in ~/.oh-my-zsh/themes/
+# Optionally, if you set this to "random", it'll load a random theme each
+# time that oh-my-zsh is loaded.
+ZSH_THEME="cloud"
+
+# Example aliases
+# alias zshconfig="mate ~/.zshrc"
+# alias ohmyzsh="mate ~/.oh-my-zsh"
+
+plugins=(debian git git-extras colored-man zsh_reload dirhistory)
+
+source $ZSH/oh-my-zsh.sh
+
+#Nano FTW.
+export EDITOR='nano -w'
+
+# The next line updates PATH for the Google Cloud SDK.
+source /google-cloud-sdk/path.zsh.inc
+
+# The next line enables bash completion for gcloud.
+source /google-cloud-sdk/completion.zsh.inc
+
+#kubctl completion
+source <(kubectl completion zsh)
+
+# add go tooling
+PATH=/usr/local/go/bin:/go/bin:/go_appengine:$PATH

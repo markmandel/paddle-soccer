@@ -1,8 +1,9 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Push the docker container up to gcr.io- Create a Kubernetes cluster
-- Run the game in a pod, on port 7777 and test connection
-- Make the port dynamic
+- Make the port dynamic (environment variables for range)
+- Make an API for registering a started game's details
+- Make the API for creating the game, and returning the information
+- Make the API to get the current game state
 - Create a simple matchmaker
 - Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.
