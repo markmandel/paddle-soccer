@@ -1,0 +1,28 @@
+resources:
+- name: soccer-us-west
+  type: container.v1.cluster
+  properties:
+    zone: us-west1-b
+    cluster:
+      name: soccer-us-west
+      description: US West side server for soccer multiplayer
+      initialNodeCount: 3
+      nodeConfig:
+        machineType: n1-standard-2
+        tags:
+          - game-server
+        oauthScopes:
+          - https://www.googleapis.com/auth/devstorage.read_only
+      masterAuth:
+        username: admin
+        password: supersecret
+- name: game-server-firewall
+  type: compute.v1.firewall
+  properties:
+    name: game-server
+    targetTags:
+      - "game-server"
+    allowed:
+      - IPProtocol: udp
+        ports:
+          - "7000-8000"
