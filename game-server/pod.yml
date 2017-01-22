@@ -8,16 +8,8 @@ spec:
   containers:
     - name: soccer-server
       image: gcr.io/unity-1355/soccer-server:0.1
-      ports:
-        - containerPort: 7777
-          protocol: UDP
-          hostPort: 7777
       env:
-        - name: MY_POD_NAME
+        - name: SESSION_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: MY_POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
