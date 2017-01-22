@@ -59,10 +59,20 @@ namespace Network
         /// as set in the Unity editor.
         /// </summary>
         /// <param name="host">The server host</param>
-        /// <param name="port">The port to use</param>
-        public void SetHost(string host, int port)
+        public void SetHost(string host)
         {
             networkAddress = host;
+        }
+
+        // --- Client & Server Commands ---
+
+        /// <summary>
+        /// Change the Server/Client port settings from the default
+        /// as set in the Unity editor.
+        /// </summary>
+        /// <param name="port">The port to use</param>
+        public void SetPort(int port)
+        {
             networkPort = port;
         }
     }

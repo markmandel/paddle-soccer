@@ -1,7 +1,7 @@
 ﻿using System;
-using Network;
 using UnityEngine;
 using UnityEngine.Networking;
+using Random = System.Random;
 
 namespace Server
 {
@@ -11,6 +11,24 @@ namespace Server
     /// </summary>
     public class GameServer
     {
+        private static readonly int defaultMinPort = 7000;
+        private static readonly int defaultMaxPort = 8000;
+
+        /// <summary>
+        /// Minimum port in range server can start on
+        /// </summary>
+        public static readonly string MinPortEnv = "MIN_PORT";
+
+        /// <summary>
+        /// Maximum port in range the server can start on
+        /// </summary>
+        public static readonly string MaxPortEnv = "MAX_PORT";
+
+        /// <summary>
+        /// How many times to retry for an open port
+        /// </summary>
+        private static readonly int maxStartRetries = 10;
+
         private static readonly int playersNeededForGame = 2;
 
         /// <summary>
@@ -28,6 +46,8 @@ namespace Server
 
         // local member variables
         private int connCount;
+
+        private Random rnd;
 
         private IUnityServer server;
 
@@ -49,6 +69,16 @@ namespace Server
         }
 
         /// <summary>
+        /// Constructor, sets the server
+        /// </summary>
+        /// <param name="server"></param>
+        public GameServer(IUnityServer server)
+        {
+            rnd = new Random();
+            this.server = server;
+        }
+
+        /// <summary>
         /// Starts the server with the dependencies this singleton needs. This should only ever be called once,
         /// as it will throw an exception if it get called again.
         /// </summary>
@@ -56,18 +86,49 @@ namespace Server
         {
             if (instance == null)
             {
-                instance = new GameServer {server = server};
-                if (!Instance.server.StartServer())
+                instance = new GameServer(server);
+                for (var i = 0; i < maxStartRetries; i++)
                 {
-                    instance = null;
-                    throw new Exception("Error starting server");
+                    instance.SelectPort();
+                    if (Instance.server.StartServer())
+                    {
+                        return;
+                    }
                 }
+
+                Stop();
+                throw new Exception(string.Format("Error starting server after {0} retries", maxStartRetries));
             }
             else
             {
                 throw new Exception(string.Format("{0} Can only be started once!",
                     typeof(GameServer).FullName));
             }
+        }
+
+        /// <summary>
+        /// Sets the port to a random
+        /// </summary>
+        private void SelectPort()
+        {
+            var minPort = defaultMinPort;
+            var maxPort = defaultMaxPort;
+            var minPortStr = Environment.GetEnvironmentVariable(MinPortEnv);
+            var maxPortStr = Environment.GetEnvironmentVariable(MaxPortEnv);
+
+            if (minPortStr != null)
+            {
+                minPort = int.Parse(minPortStr);
+            }
+
+            if (maxPortStr != null)
+            {
+                maxPort = int.Parse(maxPortStr);
+            }
+
+            var port = rnd.Next(minPort, maxPort);
+            Debug.LogFormat("[GameServer] Attempting to start server on port: {0}", port);
+            server.SetPort(port);
         }
 
         /// <summary>

@@ -36,7 +36,8 @@ namespace Tests.Editor.Client
             var host = "10.10.10.10";
             GameClient.Start(unityServer, new[] {"-host", host});
             unityServer.Received(1).StartClient();
-            unityServer.Received(1).SetHost(host, 7777);
+            unityServer.Received(1).SetHost(host);
+            unityServer.Received(1).SetPort(7777);
         }
 
         [Test]
@@ -45,7 +46,8 @@ namespace Tests.Editor.Client
             var args = new[] {"-port", "8080"};
             GameClient.Start(unityServer, args);
             unityServer.Received(1).StartClient();
-            unityServer.Received(1).SetHost("localhost", 8080);
+            unityServer.Received(1).SetHost("localhost");
+            unityServer.Received(1).SetPort(8080);
         }
 
         [Test]
@@ -55,7 +57,8 @@ namespace Tests.Editor.Client
             var args = new[] {"-host", host, "-port", "8080"};
             GameClient.Start(unityServer, args);
             unityServer.Received(1).StartClient();
-            unityServer.Received(1).SetHost(host, 8080);
+            unityServer.Received(1).SetHost(host);
+            unityServer.Received(1).SetPort(8080);
         }
     }
 }

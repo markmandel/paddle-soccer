@@ -85,7 +85,8 @@ namespace Client
             }
 
             Debug.LogFormat("[GameClient] Host: {0}, Port: {1}", host, port);
-            Instance.client.SetHost(host, port);
+            Instance.client.SetHost(host);
+            Instance.client.SetPort(port);
         }
 
         /// <summary>

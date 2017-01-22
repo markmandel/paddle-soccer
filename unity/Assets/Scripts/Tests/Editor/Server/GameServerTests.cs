@@ -36,10 +36,39 @@ namespace Tests.Editor.Server
 
             unityServer.StartServer().Returns(false);
             Assert.Throws<Exception>(() => GameServer.Start(unityServer));
+            unityServer.Received(10).StartServer();
+
+            unityServer.ClearReceivedCalls();
             unityServer.StartServer().Returns(true);
             GameServer.Start(unityServer);
-            unityServer.Received(2).StartServer();
+            unityServer.Received(1).StartServer();
             Assert.Throws<Exception>(() => GameServer.Start(unityServer));
+        }
+
+        [Test]
+        public void SelectPort()
+        {
+            Environment.SetEnvironmentVariable(GameServer.MinPortEnv, null);
+            Environment.SetEnvironmentVariable(GameServer.MaxPortEnv, null);
+
+            for (var i = 0; i < 100; i++)
+            {
+                GameServer.Stop();
+                unityServer.ClearReceivedCalls();
+                GameServer.Start(unityServer);
+                unityServer.Received(1).SetPort(Arg.Is<int>(x => 7000 <= x && x <= 8000));
+            }
+
+            Environment.SetEnvironmentVariable(GameServer.MinPortEnv, "10");
+            Environment.SetEnvironmentVariable(GameServer.MaxPortEnv, "100");
+
+            for (var i = 0; i < 100; i++)
+            {
+                GameServer.Stop();
+                unityServer.ClearReceivedCalls();
+                GameServer.Start(unityServer);
+                unityServer.Received(1).SetPort(Arg.Is<int>(x => 10 <= x && x <= 100));
+            }
         }
 
         [Test]

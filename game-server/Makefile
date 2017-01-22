@@ -59,7 +59,7 @@ clean-docker:
 
 # run it!
 run:
-	docker run --rm --name $(RUN_NAME) -p 7777:7777/udp $(TAG)
+	docker run --rm --name $(RUN_NAME) -e "MIN_PORT=7777" -e "MAX_PORT=7777" -p 7777:7777/udp $(TAG)
 
 stop:
 	docker stop $(RUN_NAME)
