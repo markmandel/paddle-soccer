@@ -87,3 +87,6 @@ build-unity:
 clean-unity:
 	trash $(unity_build)/*
 
+# run the tests
+test:
+	$(UNITY_EDITOR) -batchmode -projectPath "$(unity_src)" -runEditorTests -editorTestsResultFile "/tmp/soccer-multiplayer"
