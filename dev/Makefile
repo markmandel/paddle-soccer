@@ -28,6 +28,7 @@ PROJECT=$(shell gcloud config list project | awk 'FNR ==2 { print $$3 }')
 TAG=multiplayer-soccer/dev
 REGISTRY_TAG=gcr.io/$(PROJECT)/$(TAG)
 NAME=multiplayer-soccer-shell
+DOCKER_GID=$(word 3,$(subst :, ,$(shell getent group docker)))
 
 #Directory that this Makefile is in.
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
@@ -66,6 +67,9 @@ shell:
 		-e HOST_GID=`id -g` \
 		-e HOST_UID=`id -u` \
 		-e HOST_USER=$(USER) \
+		-e DOCKER_GID=$(DOCKER_GID) \
+		-v /usr/bin/docker:/usr/bin/docker \
+		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v ~/.gitconfig:/home/$(USER)/.gitconfig \
 		-v ~/.ssh:/home/$(USER)/.ssh \
 		-v ~/.config/gcloud:/home/$(USER)/.config/gcloud \
@@ -82,16 +86,12 @@ shell-attach:
 
 # mount sdks
 mount:
-	-mkdir -p /tmp/$(NAME)/{go,go_appengine}
+	-mkdir -p /tmp/$(NAME)/go
 	sshfs $(USER)@0.0.0.0:/usr/local/go /tmp/$(NAME)/go -p $(call getPort,22) -o follow_symlinks
-	sshfs $(USER)@0.0.0.0:/go_appengine /tmp/$(NAME)/go_appengine -p $(call getPort,22) -o follow_symlinks
 
 # remove known_hosts of type [0.0.0.0]
 clean-mounts:
 	sed -i 's/^\[0.0.0.0\].*$$//g' ~/.ssh/known_hosts
-
-tmuxp: clean-mounts
-	tmuxp load ./tmuxp.yaml
 
 #   _____                 _   _
 #  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___

@@ -13,5 +13,7 @@
         /// </summary>
         /// <param name="port">The port to use</param>
         void SetPort(int port);
+
+        void PostHTTP(string host, string body);
     }
 }

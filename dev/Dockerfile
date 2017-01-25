@@ -15,7 +15,7 @@
 FROM golang:1.7
 
 RUN apt-get update && \
-    apt-get -y install wget curl entr nano less unzip python zsh git make openssh-server
+    apt-get -y install wget curl entr nano less unzip python zsh git make openssh-server libapparmor1 libltdl7
 
 WORKDIR /
 
@@ -36,6 +36,12 @@ ENV PATH /google-cloud-sdk/bin:$PATH
 
 RUN gcloud components update kubectl
 
+#redis
+RUN mkdir redis && cd redis && wget -O redis.tar.gz -q http://download.redis.io/releases/redis-3.2.6.tar.gz && \
+    tar xzf redis.tar.gz --strip-components=1 && rm redis.tar.gz && make
+RUN sed -i "s/daemonize no/daemonize yes/" /redis/redis.conf
+RUN sed -i 's|logfile ""|logfile "/redis/redis.log"|' /redis/redis.conf
+
 #oh-my-zsh, because how do we live without it?
 RUN git clone https://github.com/robbyrussell/oh-my-zsh.git
 
@@ -48,8 +54,9 @@ RUN go get github.com/tools/godep
 # copy these tools into Go install, so we can mount on /go
 # and when we mount the go sdk they are available
 # externally
-RUN cp /go/bin/* /usr/local/go/bin/
+RUN mv /go/bin/* /usr/local/go/bin/
 RUN rm -r /go/src
+RUN rm -r /go/pkg
 
 WORKDIR /root
 

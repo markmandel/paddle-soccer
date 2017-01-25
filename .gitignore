@@ -1,3 +1,4 @@
 .*
 !.gitignore
 *.iml
+/go

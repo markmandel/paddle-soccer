@@ -1,0 +1,41 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sessions-redis
+spec:
+  ports:
+  - port: 6379
+  selector:
+    role: sessions-redis
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: sessions-redis
+spec:
+  serviceName: "sessions-redis"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        role: sessions-redis
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: redis
+        image: redis:3
+        ports:
+        - containerPort: 6379
+# TODO: WHY DOESN'T THIS WORK?
+#        volumeMounts:
+#        - name: data
+#          mountPath: /data
+#  volumeClaimTemplates:
+#  - metadata:
+#      name: data
+#    spec:
+#      accessModes: [ "ReadWriteOnce" ]
+#      resources:
+#        requests:
+#          storage: 1Gi

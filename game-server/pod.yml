@@ -8,6 +8,7 @@ spec:
   containers:
     - name: soccer-server
       image: gcr.io/unity-1355/soccer-server:0.1
+      imagePullPolicy: Always
       env:
         - name: SESSION_NAME
           valueFrom:

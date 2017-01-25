@@ -25,6 +25,18 @@ namespace Server
         public static readonly string MaxPortEnv = "MAX_PORT";
 
         /// <summary>
+        /// Environment variable for where the session services
+        /// is. Set by Kubernetes.
+        /// </summary>
+        public static readonly string SessionsServiceEnv = "SESSIONS_SERVICE_HOST";
+
+        /// <summary>
+        /// Environment or the session name. Provided by K8s downward API
+        /// </summary>
+        public static readonly string SessionNameEnv = "SESSION_NAME";
+
+
+        /// <summary>
         /// How many times to retry for an open port
         /// </summary>
         private static readonly int maxStartRetries = 10;
@@ -48,6 +60,7 @@ namespace Server
         private int connCount;
 
         private Random rnd;
+        private int port;
 
         private IUnityServer server;
 
@@ -92,6 +105,7 @@ namespace Server
                     instance.SelectPort();
                     if (Instance.server.StartServer())
                     {
+                        instance.Register();
                         return;
                     }
                 }
@@ -126,9 +140,34 @@ namespace Server
                 maxPort = int.Parse(maxPortStr);
             }
 
-            var port = rnd.Next(minPort, maxPort);
+            port = rnd.Next(minPort, maxPort);
             Debug.LogFormat("[GameServer] Attempting to start server on port: {0}", port);
             server.SetPort(port);
+        }
+
+        /// <summary>
+        /// Register this server
+        /// </summary>
+        private void Register()
+        {
+            var registry = Environment.GetEnvironmentVariable(SessionsServiceEnv);
+
+            if (registry == null)
+            {
+                Debug.LogFormat("[GameNetwork] No Session Registry environment variable set. Skipping.");
+                return;
+            }
+
+            Debug.Log("Registering Server...");
+
+            var session = new Session
+            {
+                id = Environment.GetEnvironmentVariable(SessionNameEnv),
+                port = port
+            };
+
+            var host = "http://" + registry + "/register";
+            server.PostHTTP(host, JsonUtility.ToJson(session));
         }
 
         /// <summary>

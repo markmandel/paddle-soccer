@@ -1,0 +1,23 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: sessions
+spec:
+  replicas: 5
+  template:
+    metadata:
+      labels:
+        role: sessions-server
+        visualize: "true"
+        name: sessions
+        uses: session-redis
+    spec:
+      containers:
+      - name: sessions
+        image: gcr.io/${PROJECT}/sessions
+        imagePullPolicy: Always
+        env:
+          - name: REDIS_SERVICE # TODO: Use a configmap instead
+            value: sessions-redis:6379
+        ports:
+        - containerPort: 8080

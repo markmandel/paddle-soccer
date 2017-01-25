@@ -23,5 +23,15 @@ chown -R $HOST_USER:$HOST_USER /oh-my-zsh
 chown -R $HOST_USER:$HOST_USER /google-cloud-sdk
 chown -R $HOST_USER:$HOST_USER /go
 
+#allow docker passthrough
+groupadd --gid $DOCKER_GID docker
+usermod -a -G docker $HOST_USER
+
+#link up go src, so it works
+ln -s /home/$HOST_USER/project/go/src /go
+
+#start redis
+/redis/src/redis-server /redis/redis.conf
+
 /usr/sbin/sshd
 su $HOST_USER

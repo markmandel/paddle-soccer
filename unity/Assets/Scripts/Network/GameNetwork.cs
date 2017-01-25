@@ -1,4 +1,6 @@
-﻿using Client;
+﻿using System.Collections;
+using System.Text;
+using Client;
 using UnityEngine;
 using UnityEngine.Networking;
 using Server;
@@ -7,7 +9,7 @@ namespace Network
 {
     public class GameNetwork : NetworkManager, IUnityServer, IUnityClient
     {
-        public readonly string Version = "0.2";
+        public readonly string Version = "0.3";
 
         /// <summary>
         /// How many players have joined the game?
@@ -50,6 +52,32 @@ namespace Network
         {
             base.OnServerAddPlayer(conn, playerControllerId);
             GameServer.OnServerAddPlayer(numPlayers);
+        }
+
+        public void PostHTTP(string host, string body)
+        {
+            StartCoroutine(AsyncPostHTTP(host, body));
+        }
+
+        private IEnumerator AsyncPostHTTP(string host, string body)
+        {
+            Debug.LogFormat("[GameNetwork] Posting to: {0} data: {1}", host, body);
+
+            byte[] bytes = Encoding.UTF8.GetBytes(body);
+            using (var post = UnityWebRequest.Put(host, bytes))
+            {
+                //switch it back to being post
+                post.method = UnityWebRequest.kHttpVerbPOST;
+
+                yield return post.Send();
+
+                if(post.isError) {
+                    Debug.Log(post.error);
+                }
+                else {
+                    Debug.Log("Post complete!");
+                }
+            }
         }
 
         // --- Client Commands ---

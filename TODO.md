@@ -1,6 +1,5 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Make the port dynamic (environment variables for range)
 - Make an API for registering a started game's details
 - Make the API for creating the game, and returning the information
 - Make the API to get the current game state
