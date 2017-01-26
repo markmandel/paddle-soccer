@@ -65,7 +65,7 @@ push:
 
 # delete the pods, so they come down again
 re-deploy:
-	kubectl get pods --selector=role=sessions-server | awk '{ print $$1 }' | xargs kubectl delete pod
+	kubectl get pods --selector=role=sessions-server | grep sessions | awk '{ print $$1 }' | xargs kubectl delete pod
 
 # pull from gcr.io
 pull:

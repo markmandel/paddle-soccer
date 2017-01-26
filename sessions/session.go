@@ -1,40 +1,41 @@
 package sessions
 
-import "log"
+import (
+	"encoding/json"
+	"log"
+	"net/http"
 
-// Session represents a game session
-type Session struct {
-	ID   string `json:"id",redis:"id"`
-	Port int    `json:"port",redis:"port"`
-}
+	"fmt"
 
-const redisSessionPrefix = "Session:"
+	"github.com/gorilla/mux"
+)
 
-// storeSession store the session in redis
-func (s *Server) storeSession(sess Session) error {
-	log.Print("[Info][Session] Storing session in redis")
-	con := s.pool.Get()
-	defer con.Close()
+// RegisterHandler registration of a new game session
+func sessionGetHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	id, ok := vars["id"]
 
-	key := redisSessionPrefix + sess.ID
-
-	err := con.Send("MULTI")
-	if err != nil {
-		log.Printf("[Error][session] Could not Send MULTI: %v", err)
-	}
-	err = con.Send("HMSET", key, "id", sess.ID, "port", sess.Port)
-	if err != nil {
-		log.Printf("[Error][session] Could not Send HMSET: %v", err)
-	}
-	err = con.Send("EXPIRE", key, 60*60)
-	if err != nil {
-		log.Printf("[Error][session] Could not Send EXPIRE: %v", err)
-	}
-	_, err = con.Do("EXEC")
-
-	if err != nil {
-		log.Printf("[Error][session] Could not save session to redis: %v", err)
+	if !ok {
+		msg := "No session id provided"
+		log.Printf("[Error][session]" + msg)
+		http.Error(w, msg, http.StatusNotFound)
+		return nil
 	}
 
-	return err
+	log.Printf("[Info][Session] Getting Session: %v", id)
+
+	sess, err := s.getSession(id)
+
+	if err != nil {
+		log.Printf("[Error][Session] Error getting session: %v", err)
+
+		if err == ErrorSessionNotFound {
+			http.Error(w, fmt.Sprintf("Could not find session for id: %v", id), http.StatusNotFound)
+			return nil
+		}
+
+		return err
+	}
+
+	return json.NewEncoder(w).Encode(sess)
 }

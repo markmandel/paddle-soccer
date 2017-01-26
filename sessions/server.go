@@ -12,7 +12,7 @@ import (
 )
 
 // Version is the current api version number
-const Version string = "0.2"
+const Version string = "0.3"
 
 // Server is the http server instance
 type Server struct {
@@ -40,7 +40,8 @@ func NewServer(hostAddr, redisAddr string) *Server {
 func (s *Server) Start() {
 
 	r := mux.NewRouter()
-	r.HandleFunc("/register", s.standardHandler(RegisterHandler)).Methods("POST")
+	r.HandleFunc("/register", s.standardHandler(registerHandler)).Methods("POST")
+	r.HandleFunc("/session/{id}", s.standardHandler(sessionGetHandler)).Methods("GET")
 
 	srv := &http.Server{
 		Handler: r,

@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: "game-1234"
+  name: "game-1432"
 spec:
   hostNetwork: true
   restartPolicy: Never

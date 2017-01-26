@@ -8,7 +8,7 @@ import (
 )
 
 // RegisterHandler registration of a new game session
-func RegisterHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
+func registerHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	var sess Session
 
 	//TODO: this needs cleaning up allot
@@ -50,6 +50,7 @@ func RegisterHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	log.Printf("[Info][Register] Session: IP: %v, Port: %v", ip, sess.Port)
+	sess.IP = ip
 
 	return s.storeSession(sess)
 }
