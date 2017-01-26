@@ -11,7 +11,7 @@ import (
 func registerHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	var sess Session
 
-	//TODO: this needs cleaning up allot
+	//TODO: this needs cleaning up a lot
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -30,21 +30,19 @@ func registerHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 
 	log.Printf("[Info][Register] Recieved Session Registration: %#v", sess)
 
-	cs, err := ClientSet()
-
 	if err != nil {
 		log.Printf("[Error][Register] Error connecting to Kubernetes: %v", err)
 		return err
 	}
 
-	list, err := HostNameAndIP(cs)
+	list, err := s.hostNameAndIP()
 
 	if err != nil {
 		log.Printf("[Error][Register] Error Listing nodes: %v", err)
 		return err
 	}
 
-	ip, err := ExternalNodeIPofPod(cs, sess, list)
+	ip, err := s.externalNodeIPofPod(sess, list)
 	if err != nil {
 		return err
 	}

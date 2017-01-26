@@ -102,8 +102,11 @@ update-deps:
 	go get -u github.com/cenkalti/backoff
 	-git clone -b release-2.0 --depth=5 https://github.com/kubernetes/client-go.git $(GOPATH)/src/k8s.io/client-go
 
-test-request:
+test-register:
 	curl -v -H "Content-Type: application/json" -X POST -d '{"id":"game-1234","port":7878}' http://$(SERVER)/register
+
+test-create:
+	curl -v -H "Content-Type: application/json" -X POST http://$(SERVER)/session
 
 bin-dir:
 	-mkdir -p $(current_path)/bin

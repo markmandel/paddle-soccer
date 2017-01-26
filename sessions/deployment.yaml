@@ -19,5 +19,7 @@ spec:
         env:
           - name: REDIS_SERVICE # TODO: Use a configmap instead
             value: sessions-redis:6379
+          - name: GAME_SERVER_IMAGE
+            value: gcr.io/${PROJECT}/soccer-server:0.1
         ports:
         - containerPort: 8080

@@ -6,12 +6,13 @@ import (
 	"log"
 
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api/unversioned"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/rest"
 )
 
-// ClientSet get the kubernetes clientset
-func ClientSet() (*kubernetes.Clientset, error) {
+// clientSet get the kubernetes clientset
+func clientSet() (*kubernetes.Clientset, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -26,11 +27,10 @@ func ClientSet() (*kubernetes.Clientset, error) {
 	return cs, nil
 }
 
-// HostNameAndIP returns a map of hostname (key) to external IP (value)
-func HostNameAndIP(cs *kubernetes.Clientset) (map[string]string, error) {
+// hostNameAndIP returns a map of hostname (key) to external IP (value)
+func (s *Server) hostNameAndIP() (map[string]string, error) {
 	result := make(map[string]string)
-	var list *v1.NodeList
-	list, err := cs.CoreV1().Nodes().List(v1.ListOptions{})
+	list, err := s.cs.CoreV1().Nodes().List(v1.ListOptions{})
 
 	if err != nil {
 		return result, err
@@ -58,18 +58,63 @@ func HostNameAndIP(cs *kubernetes.Clientset) (map[string]string, error) {
 	return result, nil
 }
 
-// ExternalNodeIPofPod gets the external IP address of the node a pod is on
-func ExternalNodeIPofPod(cs *kubernetes.Clientset, s Session, m map[string]string) (string, error) {
-	log.Printf("[Info][Kubernetes] Retrieving pod information for pod: %v", s.ID)
+// externalNodeIPofPod gets the external IP address of the node a pod is on
+func (s *Server) externalNodeIPofPod(sess Session, m map[string]string) (string, error) {
+	log.Printf("[Info][Kubernetes] Retrieving pod information for pod: %v", sess.ID)
 
-	var pod *v1.Pod
-	pod, err := cs.CoreV1().Pods("default").Get(s.ID)
+	pod, err := s.cs.CoreV1().Pods("default").Get(sess.ID)
 
 	if err != nil {
-		log.Printf("[Error][Register] Error getting pod information for pod %v: %v", s.ID, err)
+		log.Printf("[Error][Kubernetes] Error getting pod information for pod %v: %v", sess.ID, err)
 		return "", err
 	}
 
 	nodeName := pod.Spec.NodeName
 	return m[nodeName], nil
+}
+
+// createSessionPod creates a pod for the session
+func (s *Server) createSessionPod(image string) (string, error) {
+	//id := "game-" + string(uuid.NewUUID())
+	log.Printf("[Info][create] Creating new game session")
+
+	pod := v1.Pod{
+		TypeMeta: unversioned.TypeMeta{APIVersion: "v1", Kind: "Pod"},
+		ObjectMeta: v1.ObjectMeta{
+			GenerateName: "sessions-game-",
+			Labels:       map[string]string{"sessions": "game"},
+		},
+		Spec: v1.PodSpec{
+			HostNetwork:   true,
+			RestartPolicy: v1.RestartPolicyNever,
+			Containers: []v1.Container{
+				{
+					Name:            "sessions-game",
+					Image:           image,
+					ImagePullPolicy: v1.PullAlways, // TODO: make this an env var
+					Env: []v1.EnvVar{
+						{
+							Name: "SESSION_NAME",
+							ValueFrom: &v1.EnvVarSource{
+								FieldRef: &v1.ObjectFieldSelector{
+									FieldPath: "metadata.name",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	log.Printf("[Info][Kubernetes] Creating pod: %#v", pod)
+	result, err := s.cs.Pods("default").Create(&pod)
+
+	if err != nil {
+		log.Printf("[Info][Kubernetes] Error creating pod: %v", err)
+	} else {
+		log.Printf("[Info][Kubernetes] Created pod: %v", result.Name)
+	}
+
+	return result.Name, err
 }

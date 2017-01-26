@@ -1,41 +1,83 @@
 package sessions
 
 import (
-	"encoding/json"
+	"errors"
 	"log"
-	"net/http"
 
-	"fmt"
-
-	"github.com/gorilla/mux"
+	"github.com/garyburd/redigo/redis"
 )
 
-// RegisterHandler registration of a new game session
-func sessionGetHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
-	vars := mux.Vars(r)
-	id, ok := vars["id"]
+// Session represents a game session
+type Session struct {
+	ID   string `json:"id" redis:"id"`
+	Port int    `json:"port,omitempty" redis:"port"`
+	IP   string `json:"ip,omitempty" redis:"ip"`
+}
 
-	if !ok {
-		msg := "No session id provided"
-		log.Printf("[Error][session]" + msg)
-		http.Error(w, msg, http.StatusNotFound)
-		return nil
+const redisSessionPrefix = "Session:"
+
+// ErrorSessionNotFound is returned when you
+// can't find the Session in redis
+var ErrorSessionNotFound = errors.New("Could not find the requested session")
+
+// storeSession store the session in redis
+func (s *Server) storeSession(sess Session) error {
+	log.Print("[Info][session] Storing session in redis")
+	con := s.pool.Get()
+	defer con.Close()
+
+	key := redisSessionPrefix + sess.ID
+
+	err := con.Send("MULTI")
+	if err != nil {
+		log.Printf("[Error][session] Could not Send MULTI: %v", err)
 	}
-
-	log.Printf("[Info][Session] Getting Session: %v", id)
-
-	sess, err := s.getSession(id)
+	err = con.Send("HMSET", key, "id", sess.ID,
+		"port", sess.Port,
+		"ip", sess.IP)
 
 	if err != nil {
-		log.Printf("[Error][Session] Error getting session: %v", err)
+		log.Printf("[Error][session] Could not Send HMSET: %v", err)
+	}
+	err = con.Send("EXPIRE", key, 60*60)
+	if err != nil {
+		log.Printf("[Error][session] Could not Send EXPIRE: %v", err)
+	}
+	_, err = con.Do("EXEC")
 
-		if err == ErrorSessionNotFound {
-			http.Error(w, fmt.Sprintf("Could not find session for id: %v", id), http.StatusNotFound)
-			return nil
-		}
-
-		return err
+	if err != nil {
+		log.Printf("[Error][session] Could not save session to redis: %v", err)
 	}
 
-	return json.NewEncoder(w).Encode(sess)
+	return err
+}
+
+func (s *Server) getSession(id string) (Session, error) {
+	con := s.pool.Get()
+	defer con.Close()
+
+	key := redisSessionPrefix + id
+
+	log.Printf("[Info][session_type] Getting data for key: %v", key)
+
+	var result Session
+	values, err := redis.Values(con.Do("HGETALL", key))
+
+	if err != nil {
+		log.Printf("[Error][session] Error getting hash for key %v. %v", key, err)
+		return result, err
+	}
+
+	if len(values) == 0 {
+		log.Printf("[Error][session] Could not find record for key: %v", key)
+		return result, ErrorSessionNotFound
+	}
+
+	err = redis.ScanStruct(values, &result)
+
+	if err != nil {
+		log.Printf("[Error][session] Error Scanning Struct %v", err)
+	}
+
+	return result, err
 }

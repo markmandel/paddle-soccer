@@ -9,6 +9,7 @@ import (
 	"github.com/cenkalti/backoff"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
+	"k8s.io/client-go/kubernetes"
 )
 
 // Version is the current api version number
@@ -18,6 +19,7 @@ const Version string = "0.3"
 type Server struct {
 	addr string
 	pool *redis.Pool
+	cs   *kubernetes.Clientset
 }
 
 // Handler is the extended http.HandleFunc to provide context for this application
@@ -41,7 +43,8 @@ func (s *Server) Start() {
 
 	r := mux.NewRouter()
 	r.HandleFunc("/register", s.standardHandler(registerHandler)).Methods("POST")
-	r.HandleFunc("/session/{id}", s.standardHandler(sessionGetHandler)).Methods("GET")
+	r.HandleFunc("/session/{id}", s.standardHandler(getHandler)).Methods("GET")
+	r.HandleFunc("/session", s.standardHandler(createHandler)).Methods("POST")
 
 	srv := &http.Server{
 		Handler: r,
@@ -51,6 +54,11 @@ func (s *Server) Start() {
 	err := s.pingRedis()
 	if err != nil {
 		log.Fatalf("[Error][Server] Could not connect to redis: %v", err)
+	}
+
+	s.cs, err = clientSet()
+	if err != nil {
+		log.Fatalf("[Error][Server] Could not connect to kubernetes api: %v", err)
 	}
 
 	log.Fatalf("[Error][Server] Error starting server: %v", srv.ListenAndServe())
