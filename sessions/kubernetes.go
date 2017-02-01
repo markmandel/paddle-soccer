@@ -11,8 +11,8 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// clientSet get the kubernetes clientset
-func clientSet() (*kubernetes.Clientset, error) {
+// clientSet get the producton kubernetes clientset
+func clientSet() (kubernetes.Interface, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -75,14 +75,15 @@ func (s *Server) externalNodeIPofPod(sess Session, m map[string]string) (string,
 
 // createSessionPod creates a pod for the session
 func (s *Server) createSessionPod(image string) (string, error) {
-	//id := "game-" + string(uuid.NewUUID())
 	log.Printf("[Info][create] Creating new game session")
+	namespace := "default"
 
 	pod := v1.Pod{
 		TypeMeta: unversioned.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: v1.ObjectMeta{
 			GenerateName: "sessions-game-",
 			Labels:       map[string]string{"sessions": "game"},
+			Namespace:    namespace,
 		},
 		Spec: v1.PodSpec{
 			HostNetwork:   true,
@@ -108,13 +109,15 @@ func (s *Server) createSessionPod(image string) (string, error) {
 	}
 
 	log.Printf("[Info][Kubernetes] Creating pod: %#v", pod)
-	result, err := s.cs.Pods("default").Create(&pod)
+	result, err := s.cs.CoreV1().Pods(namespace).Create(&pod)
+	var name string
 
 	if err != nil {
 		log.Printf("[Info][Kubernetes] Error creating pod: %v", err)
 	} else {
 		log.Printf("[Info][Kubernetes] Created pod: %v", result.Name)
+		name = result.Name
 	}
 
-	return result.Name, err
+	return name, err
 }

@@ -38,10 +38,12 @@ func (s *Server) storeSession(sess Session) error {
 
 	if err != nil {
 		log.Printf("[Error][session] Could not Send HMSET: %v", err)
+		return err
 	}
 	err = con.Send("EXPIRE", key, 60*60)
 	if err != nil {
 		log.Printf("[Error][session] Could not Send EXPIRE: %v", err)
+		return err
 	}
 	_, err = con.Do("EXEC")
 

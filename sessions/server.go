@@ -19,7 +19,7 @@ const Version string = "0.3"
 type Server struct {
 	addr string
 	pool *redis.Pool
-	cs   *kubernetes.Clientset
+	cs   kubernetes.Interface
 }
 
 // Handler is the extended http.HandleFunc to provide context for this application

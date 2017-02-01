@@ -85,11 +85,11 @@ check-code:
 	find $(current_path) -type f -name '*.go' -not -path '$(current_path)vendor/*' | xargs goimports -w
 	go vet $(PACKAGE_ROOT)
 	golint $(PACKAGE_ROOT)
-	-errcheck $(PACKAGE_ROOT)
+	-errcheck $(PACKAGE_ROOT) | grep -v "defer"
 	@echo "...Complete"
 
 test: check-code
-	goapp test $(PACKAGE_ROOT)
+	go test $(PACKAGE_ROOT)
 
 # Fire up a godoc server
 godoc:
