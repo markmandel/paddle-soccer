@@ -95,12 +95,13 @@ test: check-code
 godoc:
 	godoc -http=":8080" &
 
-update-deps:
-	go get -u github.com/stretchr/testify/assert
-	go get -u github.com/gorilla/mux
-	go get -u github.com/garyburd/redigo/redis
-	go get -u github.com/cenkalti/backoff
+deps:
 	-git clone -b release-2.0 --depth=5 https://github.com/kubernetes/client-go.git $(GOPATH)/src/k8s.io/client-go
+	cd $(GOPATH)/src/k8s.io/client-go && godep restore && rm -rf vendor && git add -A && git commit -a -m "Commit"
+	go get github.com/stretchr/testify/assert
+	go get github.com/gorilla/mux
+	go get github.com/garyburd/redigo/redis
+	go get github.com/cenkalti/backoff
 
 test-register:
 	curl -v -H "Content-Type: application/json" -X POST -d '{"id":"game-1234","port":7878}' http://$(SERVER)/register
