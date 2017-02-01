@@ -3,9 +3,9 @@
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -13,7 +13,7 @@
 # limitations under the License.
 
 #
-# Makefile for managing the infrastructure
+# Makefile general project tasks
 #
 
 #  __     __         _       _     _
@@ -23,9 +23,9 @@
 #     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___|___/
 #
 
-NAME=soccer-infrastructure
-CLUSTER_NAME=soccer-us-west
-ZONE=us-west1-b
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_path := $(dir $(mkfile_path))
+local_gopath := $(current_path)/go
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -34,16 +34,13 @@ ZONE=us-west1-b
 #    |_|\__,_|_|  \__, |\___|\__|___/
 #                 |___/
 
-# Create kubernetes cluster
-deploy:
-	gcloud deployment-manager deployments create $(NAME) --config cluster.yml
+# Create create a local gopath directory, with the go
+# projects in the right places.
+# This is already set to be ignored by git
+create-local-gopath:
+	mkdir -p $(local_gopath)/src/github.com/markmandel
+	ln -sr $(current_path)/sessions $(local_gopath)/src/github.com/markmandel/sessions
 
-# Deletes entire deployment
-clean:
-	gcloud deployment-manager deployments delete $(NAME)
-
-# Sets up the auth for kubectl k8s on the given cluster
-auth:
-	gcloud config set container/cluster $(CLUSTER_NAME)
-	gcloud config set compute/zone $(ZONE)
-	gcloud container clusters get-credentials $(CLUSTER_NAME)
+# cleans the local gopath
+clean-local-gopath:
+	rm -rf $(local_gopath)
