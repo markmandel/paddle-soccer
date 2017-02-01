@@ -82,11 +82,11 @@ build-server: bin-dir
 
 # Make sure the code passes tests
 check-code:
-	-goimports -w $(current_path) && \
-	go vet $(PACKAGE_ROOT) && \
-	golint $(PACKAGE_ROOT) && \
-	errcheck $(PACKAGE_ROOT) && \
-	echo "...Passed"
+	find $(current_path) -type f -name '*.go' -not -path '$(current_path)vendor/*' | xargs goimports -w
+	go vet $(PACKAGE_ROOT)
+	golint $(PACKAGE_ROOT)
+	-errcheck $(PACKAGE_ROOT)
+	@echo "...Complete"
 
 test: check-code
 	goapp test $(PACKAGE_ROOT)
