@@ -63,6 +63,7 @@ shell:
 	docker run --rm \
 		--name=$(NAME) \
 		-P=true \
+		-p 6379:6379 \
 		-e TERM \
 		-e HOST_GID=`id -g` \
 		-e HOST_UID=`id -u` \
