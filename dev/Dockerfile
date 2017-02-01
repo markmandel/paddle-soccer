@@ -41,6 +41,7 @@ RUN mkdir redis && cd redis && wget -O redis.tar.gz -q http://download.redis.io/
     tar xzf redis.tar.gz --strip-components=1 && rm redis.tar.gz && make
 RUN sed -i "s/daemonize no/daemonize yes/" /redis/redis.conf
 RUN sed -i 's|logfile ""|logfile "/redis/redis.log"|' /redis/redis.conf
+RUN sed -i 's|bind 127.0.0.1|bind 0.0.0.0|' /redis/redis.conf
 
 #oh-my-zsh, because how do we live without it?
 RUN git clone https://github.com/robbyrussell/oh-my-zsh.git
