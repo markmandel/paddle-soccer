@@ -1,5 +1,7 @@
 # Unity Multiplayer Soccer - TODO List
 
+- Github root should change to being `paddle-soccer`, since everything is under the same repo
+- Add persistent volume to redis (check docs)
 - Create a simple matchmaker
     - implement /game/ (post)
         - Pop list 

@@ -2,3 +2,4 @@
 !.gitignore
 *.iml
 /go
+*.rdb
