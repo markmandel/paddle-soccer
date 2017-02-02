@@ -41,6 +41,7 @@ project_path := $(local_gopath)/src/github.com/markmandel/paddle-soccer
 create-local-gopath:
 	mkdir -p $(local_gopath)/src/github.com/markmandel/paddle-soccer
 	ln -sr $(current_path)/sessions $(project_path)/sessions
+	ln -sr $(current_path)/pkg $(project_path)/pkg
 
 # cleans the local gopath
 clean-local-gopath:

@@ -28,7 +28,7 @@ groupadd --gid $DOCKER_GID docker
 usermod -a -G docker $HOST_USER
 
 #link up go src, so it works
-ln -s /home/$HOST_USER/project/go/src /go
+ln -s /home/$HOST_USER/project/server/go/src /go
 
 #start redis
 /redis/src/redis-server /redis/redis.conf
