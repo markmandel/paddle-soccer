@@ -12,7 +12,6 @@
     - if we get an ip from /game/ (post) then connect
     - Otherwise, poll /game/{id} until we get a ip and port
 - Cleanup, and write a stack of tests (especially the Go code)
-- readiness check based on redis PING 
 - Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.
 - Track scores once the go through the goal area (on screen)
@@ -23,3 +22,4 @@
 - Does it make sense to shift creation to a ThirdPartyResource - could be more flexible. Allow people to set their own config vars, etc
 - Specific Nodepools for game servers vs. everyone else.
 - Autoscaling
+- readiness check based on redis PING

@@ -15,7 +15,7 @@ const Version string = "0.3"
 
 // Server is the http server instance
 type Server struct {
-	addr string
+	srv  *http.Server
 	pool *redis.Pool
 	cs   kubernetes.Interface
 }
@@ -32,23 +32,20 @@ func NewServer(hostAddr, redisAddr string) *Server {
 	log.Printf("[Info][Server] Starting server version %v on port %v", Version, hostAddr)
 	log.Printf("[Info][Server] Connecting to Redis at %v", redisAddr)
 
-	s := &Server{addr: hostAddr, pool: pkg.NewPool(redisAddr)}
+	s := &Server{pool: pkg.NewPool(redisAddr)}
+
+	r := s.createRoutes()
+
+	s.srv = &http.Server{
+		Handler: r,
+		Addr:    hostAddr,
+	}
+
 	return s
 }
 
 // Start starts the HTTP server on the given port
 func (s *Server) Start() {
-
-	r := mux.NewRouter()
-	r.HandleFunc("/register", s.standardHandler(registerHandler)).Methods("POST")
-	r.HandleFunc("/session/{id}", s.standardHandler(getHandler)).Methods("GET")
-	r.HandleFunc("/session", s.standardHandler(createHandler)).Methods("POST")
-
-	srv := &http.Server{
-		Handler: r,
-		Addr:    s.addr,
-	}
-
 	err := pkg.WaitForConnection(s.pool)
 	if err != nil {
 		log.Fatalf("[Error][Server] Could not connect to redis: %v", err)
@@ -59,7 +56,17 @@ func (s *Server) Start() {
 		log.Fatalf("[Error][Server] Could not connect to kubernetes api: %v", err)
 	}
 
-	log.Fatalf("[Error][Server] Error starting server: %v", srv.ListenAndServe())
+	log.Fatalf("[Error][Server] Error starting server: %v", s.srv.ListenAndServe())
+}
+
+// createRoutes creates the http routes for this application
+func (s *Server) createRoutes() http.Handler {
+	r := mux.NewRouter()
+	r.HandleFunc("/register", s.standardHandler(registerHandler)).Methods("POST")
+	r.HandleFunc("/session/{id}", s.standardHandler(getHandler)).Methods("GET")
+	r.HandleFunc("/session", s.standardHandler(createHandler)).Methods("POST")
+
+	return r
 }
 
 // standardHandler returns a http.HandleFunc
