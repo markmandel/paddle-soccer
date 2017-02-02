@@ -4,11 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"time"
-
-	"github.com/cenkalti/backoff"
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
+	"github.com/markmandel/paddle-soccer/pkg"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -34,7 +32,7 @@ func NewServer(hostAddr, redisAddr string) *Server {
 	log.Printf("[Info][Server] Starting server version %v on port %v", Version, hostAddr)
 	log.Printf("[Info][Server] Connecting to Redis at %v", redisAddr)
 
-	s := &Server{addr: hostAddr, pool: newPool(redisAddr)}
+	s := &Server{addr: hostAddr, pool: pkg.NewPool(redisAddr)}
 	return s
 }
 
@@ -51,7 +49,7 @@ func (s *Server) Start() {
 		Addr:    s.addr,
 	}
 
-	err := s.pingRedis()
+	err := pkg.WaitForConnection(s.pool)
 	if err != nil {
 		log.Fatalf("[Error][Server] Could not connect to redis: %v", err)
 	}
@@ -72,42 +70,5 @@ func (s *Server) standardHandler(h Handler) http.HandlerFunc {
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
-	}
-}
-
-// pingRedis pings redis, to check if we are
-// connected. Returns an error if there was a problem.
-func (s *Server) pingRedis() error {
-
-	return backoff.Retry(func() error {
-		con := s.pool.Get()
-		defer con.Close()
-
-		_, err := con.Do("PING")
-		if err != nil {
-			log.Printf("[Warn][Redis] Could not connect to Redis. %v", err)
-		} else {
-			log.Print("[Info][Redis] Connected.")
-		}
-
-		return err
-	}, backoff.NewExponentialBackOff())
-}
-
-func newPool(address string) *redis.Pool {
-	return &redis.Pool{
-		MaxIdle:     3,
-		IdleTimeout: 240 * time.Second,
-		Dial: func() (redis.Conn, error) {
-			c, err := redis.Dial("tcp", address)
-			if err != nil {
-				return nil, err
-			}
-			return c, err
-		},
-		TestOnBorrow: func(c redis.Conn, t time.Time) error {
-			_, err := c.Do("PING")
-			return err
-		},
 	}
 }

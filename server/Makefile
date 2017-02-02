@@ -39,10 +39,29 @@ project_path := $(local_gopath)/src/github.com/markmandel/paddle-soccer
 # projects in the right places.
 # This is already set to be ignored by git
 create-local-gopath:
-	mkdir -p $(local_gopath)/src/github.com/markmandel/paddle-soccer
-	ln -sr $(current_path)/sessions $(project_path)/sessions
-	ln -sr $(current_path)/pkg $(project_path)/pkg
+	mkdir -p $(local_gopath)/src/github.com/markmandel
+	ln -sr $(current_path) $(project_path)
 
 # cleans the local gopath
 clean-local-gopath:
 	rm -rf $(local_gopath)
+
+# test all the packages
+test:
+	cd sessions && $(MAKE) test
+	cd pkg && $(MAKE) test
+
+# Fire up a godoc server
+godoc:
+	godoc -http=":8080" &
+
+# easy way to pull in all the dependencies the project uses
+# handy if godep does something odd.
+deps:
+	-git clone -b release-2.0 --depth=5 https://github.com/kubernetes/client-go.git $(GOPATH)/src/k8s.io/client-go
+	cd $(GOPATH)/src/k8s.io/client-go && godep restore && rm -rf vendor && git add -A && git commit -a -m "Commit"
+	go get github.com/stretchr/testify/assert
+	go get github.com/gorilla/mux
+	go get github.com/garyburd/redigo/redis
+	go get github.com/cenkalti/backoff
+
