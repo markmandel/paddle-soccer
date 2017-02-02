@@ -26,6 +26,7 @@
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_path := $(dir $(mkfile_path))
 local_gopath := $(current_path)/go
+project_path := $(local_gopath)/src/github.com/markmandel/paddle-soccer
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -38,8 +39,8 @@ local_gopath := $(current_path)/go
 # projects in the right places.
 # This is already set to be ignored by git
 create-local-gopath:
-	mkdir -p $(local_gopath)/src/github.com/markmandel
-	ln -sr $(current_path)/sessions $(local_gopath)/src/github.com/markmandel/sessions
+	mkdir -p $(local_gopath)/src/github.com/markmandel/paddle-soccer
+	ln -sr $(current_path)/sessions $(project_path)/sessions
 
 # cleans the local gopath
 clean-local-gopath:

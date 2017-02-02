@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/markmandel/sessions"
+	"github.com/markmandel/paddle-soccer/sessions"
 )
 
 const (

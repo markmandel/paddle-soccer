@@ -27,15 +27,16 @@ spec:
         image: redis:3
         ports:
         - containerPort: 6379
-# TODO: WHY DOESN'T THIS WORK?
-#        volumeMounts:
-#        - name: data
-#          mountPath: /data
-#  volumeClaimTemplates:
-#  - metadata:
-#      name: data
-#    spec:
-#      accessModes: [ "ReadWriteOnce" ]
-#      resources:
-#        requests:
-#          storage: 1Gi
+        volumeMounts:
+        - name: data
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      annotations:
+        volume.alpha.kubernetes.io/storage-class: anything
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi

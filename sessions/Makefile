@@ -22,7 +22,7 @@
 
 PROJECT?=$(shell gcloud config list project | awk 'FNR ==2 { print $$3 }')
 TAG=gcr.io/$(PROJECT)/sessions
-PACKAGE_ROOT=github.com/markmandel/sessions
+PACKAGE_ROOT=github.com/markmandel/paddle-soccer/sessions
 SERVER?=localhost:8080
 
 #Directory that this Makefile is in.
@@ -32,7 +32,7 @@ src_path = $(current_path)/src
 
 # build the docker image
 build: build-static-server
-		docker build --tag=$(TAG) $(current_path)
+	docker build --tag=$(TAG) $(current_path)
 
 # deploy the replica set
 deploy-rs:
@@ -45,7 +45,10 @@ deploy-redis:
 	kubectl create -f redis.yaml
 
 clean-k8s:
-	kubectl delete deployment sessions
+	-kubectl delete deployment sessions
+	-kubectl delete statefulset sessions-redis
+	-kubectl delete service sessions
+	-kubectl delete service sessions-redis
 
 # give me a shell
 shell:

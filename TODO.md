@@ -1,7 +1,5 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Github root should change to being `paddle-soccer`, since everything is under the same repo
-- Add persistent volume to redis (check docs)
 - Create a simple matchmaker
     - implement /game/ (post)
         - Pop list 
@@ -14,6 +12,7 @@
     - if we get an ip from /game/ (post) then connect
     - Otherwise, poll /game/{id} until we get a ip and port
 - Cleanup, and write a stack of tests (especially the Go code)
+- readiness check based on redis PING 
 - Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.
 - Track scores once the go through the goal area (on screen)

@@ -13,6 +13,7 @@ import (
 
 // clientSet get the producton kubernetes clientset
 func clientSet() (kubernetes.Interface, error) {
+	log.Print("[Info][Kubernetes] Connecting to Kubernetes API...")
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -75,7 +76,7 @@ func (s *Server) externalNodeIPofPod(sess Session, m map[string]string) (string,
 
 // createSessionPod creates a pod for the session
 func (s *Server) createSessionPod(image string) (string, error) {
-	log.Printf("[Info][create] Creating new game session")
+	log.Print("[Info][create] Creating new game session")
 	namespace := "default"
 
 	pod := v1.Pod{
