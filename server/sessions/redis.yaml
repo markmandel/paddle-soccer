@@ -3,6 +3,9 @@ apiVersion: v1
 kind: Service
 metadata:
   name: sessions-redis
+  labels:
+    visualize: "true"
+    name: sessions-redis
 spec:
   ports:
   - port: 6379
@@ -20,6 +23,7 @@ spec:
     metadata:
       labels:
         role: sessions-redis
+        visualize: "true"
     spec:
       terminationGracePeriodSeconds: 10
       containers:

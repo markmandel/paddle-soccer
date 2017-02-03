@@ -5,6 +5,7 @@ metadata:
   name: matchmaker-redis
   labels:
     visualize: "true"
+    name: matchmaker-redis
 spec:
   ports:
   - port: 6379
@@ -15,8 +16,6 @@ apiVersion: apps/v1beta1
 kind: StatefulSet
 metadata:
   name: matchmaker-redis
-  labels:
-    visualize: "true"
 spec:
   serviceName: "matchmaker-redis"
   replicas: 1
@@ -24,6 +23,7 @@ spec:
     metadata:
       labels:
         role: matchmaker-redis
+        visualize: "true"
     spec:
       terminationGracePeriodSeconds: 10
       containers:

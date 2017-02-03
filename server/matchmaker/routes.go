@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 // GameHandler is the http request handler
@@ -51,4 +53,29 @@ func gameHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	}
 
 	return nil
+}
+
+// get the details of a game that is currently running / waiting for a second
+// person to join
+func getHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
+	con := s.pool.Get()
+	defer con.Close()
+
+	vars := mux.Vars(r)
+	id := vars["id"]
+
+	log.Printf("[Info][get_route] Retriving game: %v", id)
+
+	g, err := getGame(con, redisGamePrefix+id)
+
+	if err != nil {
+		return err
+	}
+
+	err = json.NewEncoder(w).Encode(g)
+	if err != nil {
+		log.Printf("[Error][get_route] Error encoding game to json: %v", err)
+	}
+
+	return err
 }

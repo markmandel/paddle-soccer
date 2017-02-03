@@ -9,7 +9,7 @@ import (
 )
 
 func TestServerStoreSession(t *testing.T) {
-	s := NewServer("", "")
+	s := NewServer("", "", "")
 	con := s.pool.Get()
 	defer con.Close()
 
@@ -31,7 +31,7 @@ func TestServerStoreSession(t *testing.T) {
 }
 
 func TestServerGetSession(t *testing.T) {
-	s := NewServer("", "")
+	s := NewServer("", "", "")
 	con := s.pool.Get()
 	defer con.Close()
 

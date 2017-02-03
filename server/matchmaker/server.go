@@ -6,7 +6,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
-	"github.com/markmandel/paddle-soccer/pkg"
+	"github.com/markmandel/paddle-soccer/server/pkg"
 )
 
 // Version is the current api version number

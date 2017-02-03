@@ -16,7 +16,7 @@ func TestServerHostNameAndIP(t *testing.T) {
 		},
 	}}}
 
-	s := NewServer("", "")
+	s := NewServer("", "", "")
 	sc := fake.NewSimpleClientset(&nl)
 	s.cs = sc
 
@@ -36,7 +36,7 @@ func TestServerExternalNodeIPofPod(t *testing.T) {
 		},
 	}
 
-	s := NewServer("", "")
+	s := NewServer("", "", "")
 	sc := fake.NewSimpleClientset(&p)
 	s.cs = sc
 
@@ -48,11 +48,11 @@ func TestServerExternalNodeIPofPod(t *testing.T) {
 }
 
 func TestServerCreateSessionPod(t *testing.T) {
-	s := NewServer("", "")
+	s := NewServer("", "", "foo")
 	sc := fake.NewSimpleClientset()
 	s.cs = sc
 
-	_, err := s.createSessionPod("foo")
+	_, err := s.createSessionPod()
 	assert.Nil(t, err)
 
 	list, err := sc.CoreV1().Pods("default").List(v1.ListOptions{})

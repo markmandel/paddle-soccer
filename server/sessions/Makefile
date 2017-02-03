@@ -25,7 +25,7 @@
 
 PROJECT?=$(shell gcloud config list project | awk 'FNR ==2 { print $$3 }')
 TAG=gcr.io/$(PROJECT)/sessions
-PACKAGE_ROOT=github.com/markmandel/paddle-soccer/sessions
+PACKAGE=$(PACKAGE_ROOT)/sessions
 SERVER?=localhost:8080
 
 #Directory that this Makefile is in.
@@ -41,10 +41,6 @@ src_path = $(current_path)/src
 #                 |___/
 
 include ../common.mk
-
-# build the docker image
-build: build-static-server
-	docker build --tag=$(TAG) $(current_path)
 
 # deploy the replica set
 deploy-rs:

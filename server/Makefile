@@ -25,8 +25,6 @@
 
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_path := $(dir $(mkfile_path))
-local_gopath := $(current_path)/go
-project_path := $(local_gopath)/src/github.com/markmandel/paddle-soccer
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -35,25 +33,39 @@ project_path := $(local_gopath)/src/github.com/markmandel/paddle-soccer
 #    |_|\__,_|_|  \__, |\___|\__|___/
 #                 |___/
 
-# Create create a local gopath directory, with the go
-# projects in the right places.
-# This is already set to be ignored by git
-create-local-gopath:
-	mkdir -p $(local_gopath)/src/github.com/markmandel
-	ln -sr $(current_path) $(project_path)
-
-# cleans the local gopath
-clean-local-gopath:
-	rm -rf $(local_gopath)
-
 # test all the packages
 test:
 	cd sessions && $(MAKE) test
 	cd pkg && $(MAKE) test
+	cd matchmaker && $(MAKE) test
 
-# Fire up a godoc server
-godoc:
-	godoc -http=":8080" &
+# run the visualiser
+visualise:
+	#kubectl proxy --www=/home/$(shell whoami)/gcp-live-k8s-visualizer --www-prefix=/static/ --api-prefix=/api/ --address="0.0.0.0"
+	kubectl port-forward $$(kubectl get pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}') 8001
+
+# bring up the kubectl proxy if you want to look at it.
+kubectl-proxy:
+	 kubectl proxy --address=0.0.0.0
+
+# install weavescope, for nicer visualisations
+# https://www.weave.works/docs/scope/latest/installing/#k8s
+install-weavescope:
+	# kubectl apply -f 'https://cloud.weave.works/launch/k8s/weavescope.yaml'
+	# make the service public, so it's easier to get to for demos
+	wget -O /tmp/weavescope.yaml https://cloud.weave.works/launch/k8s/weavescope.yaml
+	sed -i 's/selector:/type: LoadBalancer\n      selector:/' /tmp/weavescope.yaml
+	kubectl apply -f /tmp/weavescope.yaml
+
+# delete everything from k8s
+clean-k8s:
+	kubectl delete deployments --all
+	kubectl delete services --all
+	kubectl delete statefulset --all
+	kubectl delete pods --all
+	kubectl delete persistentvolume --all
+	kubectl delete persistentvolumeclaim --all
+	kubectl delete daemonsets --all
 
 # easy way to pull in all the dependencies the project uses
 # handy if godep does something odd.

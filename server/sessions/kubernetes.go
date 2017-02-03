@@ -34,6 +34,7 @@ func (s *Server) hostNameAndIP() (map[string]string, error) {
 	list, err := s.cs.CoreV1().Nodes().List(v1.ListOptions{})
 
 	if err != nil {
+		log.Printf("[Error][kubernetes] Error Listing nodes: %v", err)
 		return result, err
 	}
 
@@ -64,7 +65,6 @@ func (s *Server) externalNodeIPofPod(sess Session, m map[string]string) (string,
 	log.Printf("[Info][Kubernetes] Retrieving pod information for pod: %v", sess.ID)
 
 	pod, err := s.cs.CoreV1().Pods("default").Get(sess.ID)
-
 	if err != nil {
 		log.Printf("[Error][Kubernetes] Error getting pod information for pod %v: %v", sess.ID, err)
 		return "", err
@@ -75,7 +75,7 @@ func (s *Server) externalNodeIPofPod(sess Session, m map[string]string) (string,
 }
 
 // createSessionPod creates a pod for the session
-func (s *Server) createSessionPod(image string) (string, error) {
+func (s *Server) createSessionPod() (string, error) {
 	log.Print("[Info][create] Creating new game session")
 	namespace := "default"
 
@@ -83,8 +83,13 @@ func (s *Server) createSessionPod(image string) (string, error) {
 		TypeMeta: unversioned.TypeMeta{APIVersion: "v1", Kind: "Pod"},
 		ObjectMeta: v1.ObjectMeta{
 			GenerateName: "sessions-game-",
-			Labels:       map[string]string{"sessions": "game"},
-			Namespace:    namespace,
+			Labels: map[string]string{
+				"sessions":  "game",
+				"name":      "sessions-game",
+				"visualize": "true", // these are needed for the presentation demo.
+				"uses":      "sessions",
+			},
+			Namespace: namespace,
 		},
 		Spec: v1.PodSpec{
 			HostNetwork:   true,
@@ -92,8 +97,8 @@ func (s *Server) createSessionPod(image string) (string, error) {
 			Containers: []v1.Container{
 				{
 					Name:            "sessions-game",
-					Image:           image,
-					ImagePullPolicy: v1.PullAlways, // TODO: make this an env var
+					Image:           s.gameServerImage,
+					ImagePullPolicy: v1.PullAlways, // TODO: make this an env var / this is just for dev
 					Env: []v1.EnvVar{
 						{
 							Name: "SESSION_NAME",

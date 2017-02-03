@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#
+# Makefile general project tasks
+#
+
 #  __     __         _       _     _
 #  \ \   / /_ _ _ __(_) __ _| |__ | | ___ ___
 #   \ \ / / _` | '__| |/ _` | '_ \| |/ _ \ __|
@@ -19,7 +23,10 @@
 #     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___|___/
 #
 
-PACKAGE=$(PACKAGE_ROOT)/pkg
+mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
+current_path := $(dir $(mkfile_path))
+local_gopath := $(current_path)/go
+project_path := $(local_gopath)/src/github.com/markmandel/paddle-soccer/server
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -28,4 +35,17 @@ PACKAGE=$(PACKAGE_ROOT)/pkg
 #    |_|\__,_|_|  \__, |\___|\__|___/
 #                 |___/
 
-include ../common.mk
+# Create create a project specific gopath directory, with the go
+# projects in the right places. Handy if this is your thing.
+# This is already set to be ignored by git
+create-local-gopath:
+	mkdir -p $(local_gopath)/src/github.com/markmandel/paddle-soccer
+	ln -sr $(current_path)/server $(project_path)
+
+# cleans the local gopath
+clean-local-gopath:
+	rm -rf $(local_gopath)
+
+# Fire up a godoc server
+godoc:
+	godoc -http=":8080" &

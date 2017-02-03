@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/markmandel/paddle-soccer/matchmaker"
+	"github.com/markmandel/paddle-soccer/server/matchmaker"
 )
 
 const (

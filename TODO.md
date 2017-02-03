@@ -1,9 +1,6 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Implement matchmaker into Unity project (leave server option)
-    - if we get an ip from /game/ (post) then connect
-    - Otherwise, poll /game/{id} until we get a ip and port
-- Cleanup, and write a stack of tests (especially the Go code)
+- Cleanup, and write a stack of tests (especially the sessions Go code)
 - Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.
 - Track scores once the go through the goal area (on screen)
@@ -15,4 +12,5 @@
 - Specific Nodepools for game servers vs. everyone else.
 - Autoscaling
 - readiness check based on redis PING
+- http health check
 - Go through TODOS in the code

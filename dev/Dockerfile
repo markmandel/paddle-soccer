@@ -61,7 +61,12 @@ RUN rm -r /go/pkg
 
 WORKDIR /root
 
+# K8s proxy
+EXPOSE 8001
+
 ADD startup.sh startup.sh
 RUN chmod +x startup.sh
+
+
 
 EXPOSE 8080

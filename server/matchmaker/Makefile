@@ -25,7 +25,7 @@
 
 PROJECT?=$(shell gcloud config list project | awk 'FNR ==2 { print $$3 }')
 TAG=gcr.io/$(PROJECT)/matchmaker
-PACKAGE_ROOT=github.com/markmandel/paddle-soccer/matchmaker
+PACKAGE=$(PACKAGE_ROOT)/matchmaker
 SERVER?=localhost:8080
 
 #Directory that this Makefile is in.

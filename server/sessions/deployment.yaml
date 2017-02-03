@@ -9,8 +9,8 @@ spec:
       labels:
         role: sessions-server
         visualize: "true"
+        uses: sessions-redis
         name: sessions
-        uses: session-redis
     spec:
       containers:
       - name: sessions

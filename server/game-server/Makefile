@@ -29,7 +29,7 @@ UNITY_EDITOR=/opt/Unity/Editor/Unity
 #Directory that this Makefile is in.
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_path := $(dir $(mkfile_path))
-unity_src := $(current_path)../unity
+unity_src := $(current_path)../../unity
 unity_build := $(unity_src)/Builds/
 
 #   _____                    _

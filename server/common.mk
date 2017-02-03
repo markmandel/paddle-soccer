@@ -23,7 +23,7 @@
 #     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___|___/
 #
 
-
+PACKAGE_ROOT=github.com/markmandel/paddle-soccer/server
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -59,22 +59,22 @@ pull:
 # Build a statically compiled binary
 # https://github.com/constabulary/gb/issues/328
 build-static-server: bin-dir
-	CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags '-w -extld ld -extldflags -static' -o $(current_path)/bin/server $(PACKAGE_ROOT)/cmd/server
+	CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags '-w -extld ld -extldflags -static' -o $(current_path)/bin/server $(PACKAGE)/cmd/server
 
 # Build a go binary. For testing, since we need a statically compiled binary
 build-server: bin-dir
-	go build -o $(current_path)/bin/server $(PACKAGE_ROOT)/cmd/server
+	go build -o $(current_path)/bin/server $(PACKAGE)/cmd/server
 
 # Make sure the code passes tests
 check-code:
 	find $(current_path) -type f -name '*.go' -not -path '$(current_path)vendor/*' | xargs goimports -w
-	go vet $(PACKAGE_ROOT)
-	golint $(PACKAGE_ROOT)
-	-errcheck $(PACKAGE_ROOT) | grep -v "defer"
+	go vet $(PACKAGE)
+	golint $(PACKAGE)
+	-errcheck $(PACKAGE) | grep -v "defer"
 	@echo "...Complete"
 
 test: check-code
-	go test $(PACKAGE_ROOT)
+	go test $(PACKAGE)
 
 bin-dir:
 	-mkdir -p $(current_path)/bin

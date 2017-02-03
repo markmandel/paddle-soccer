@@ -25,9 +25,9 @@
 #
 
 PROJECT=$(shell gcloud config list project | awk 'FNR ==2 { print $$3 }')
-TAG=multiplayer-soccer/dev
+TAG=paddle-soccer/dev
 REGISTRY_TAG=gcr.io/$(PROJECT)/$(TAG)
-NAME=multiplayer-soccer-shell
+NAME=paddle-soccer-shell
 DOCKER_GID=$(word 3,$(subst :, ,$(shell getent group docker)))
 
 #Directory that this Makefile is in.

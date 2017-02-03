@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/markmandel/paddle-soccer/sessions"
+	"github.com/markmandel/paddle-soccer/server/sessions"
 )
 
 const (
@@ -13,6 +13,10 @@ const (
 	portEnv = "PORT"
 	// address to listen to redis on
 	redisAddressEnv = "REDIS_SERVICE"
+
+	// the image that the game server should use
+	// when starting up games
+	gameServerImageEnv = "GAME_SERVER_IMAGE"
 )
 
 func main() {
@@ -23,6 +27,6 @@ func main() {
 		port = "8080"
 	}
 	log.Print("[Info][Main] Creating server...")
-	s := sessions.NewServer(":"+port, os.Getenv(redisAddressEnv))
+	s := sessions.NewServer(":"+port, os.Getenv(redisAddressEnv), os.Getenv(gameServerImageEnv))
 	s.Start()
 }

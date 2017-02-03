@@ -6,7 +6,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
-	"github.com/markmandel/paddle-soccer/pkg"
+	"github.com/markmandel/paddle-soccer/server/pkg"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -18,13 +18,15 @@ type Server struct {
 	srv  *http.Server
 	pool *redis.Pool
 	cs   kubernetes.Interface
+	// the game server image
+	gameServerImage string
 }
 
 // Handler is the extended http.HandleFunc to provide context for this application
 type Handler func(*Server, http.ResponseWriter, *http.Request) error
 
 // NewServer returns the HTTP Server instance
-func NewServer(hostAddr, redisAddr string) *Server {
+func NewServer(hostAddr, redisAddr string, image string) *Server {
 	if redisAddr == "" {
 		redisAddr = ":6379"
 	}
@@ -32,7 +34,7 @@ func NewServer(hostAddr, redisAddr string) *Server {
 	log.Printf("[Info][Server] Starting server version %v on port %v", Version, hostAddr)
 	log.Printf("[Info][Server] Connecting to Redis at %v", redisAddr)
 
-	s := &Server{pool: pkg.NewPool(redisAddr)}
+	s := &Server{gameServerImage: image, pool: pkg.NewPool(redisAddr)}
 
 	r := s.createRoutes()
 
