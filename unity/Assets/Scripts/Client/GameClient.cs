@@ -13,6 +13,7 @@ namespace Client
         private static readonly int defaultPort = 7777;
         private static readonly string hostArg = "-host";
         private static readonly string portArg = "-port";
+        private static readonly string matchArg = "-match";
 
 
         /// <summary>
@@ -46,7 +47,6 @@ namespace Client
             {
                 instance = new GameClient {client = client};
                 ProcessCommandLineArguments(commandLineArgs);
-                Instance.client.StartClient();
             }
             else
             {
@@ -65,7 +65,6 @@ namespace Client
             if (!commandLineArgs.Any())
             {
                 Debug.Log("[GameClient] Default host and port");
-                return;
             }
 
             var host = defaultHost;
@@ -74,6 +73,14 @@ namespace Client
             for (var i = 0; i < commandLineArgs.Count(); i++)
             {
                 var arg = commandLineArgs[i];
+
+                // Matchmaker takes precedence
+                if (arg == matchArg)
+                {
+                    MatchMake(commandLineArgs[i + 1]);
+                    return;
+                }
+
                 if (arg == hostArg)
                 {
                     host = commandLineArgs[i + 1];
@@ -87,6 +94,61 @@ namespace Client
             Debug.LogFormat("[GameClient] Host: {0}, Port: {1}", host, port);
             Instance.client.SetHost(host);
             Instance.client.SetPort(port);
+            Instance.client.StartClient();
+        }
+
+        private static void MatchMake(string matchHost)
+        {
+            var path = matchHost + "/game";
+            Debug.LogFormat("[GameClient] Invoking the MatchMaker! {0}", path);
+            Instance.client.PostHTTP(path, null,
+                request =>
+                {
+                    Debug.LogFormat("[GameClient] Matcher response: {0}:{1}", request.responseCode,
+                        request.downloadHandler.text);
+
+                    var game = JsonUtility.FromJson<Game>(request.downloadHandler.text);
+
+                    if (request.responseCode == 201) //created and in queue
+                    {
+                        PollMatchMake(matchHost, game);
+                    }
+                    else if (request.responseCode == 200)
+                    {
+                        Instance.client.SetHost(game.ip);
+                        Instance.client.SetPort(game.port);
+                        Instance.client.StartClient();
+                    }
+                    else
+                    {
+                        throw new Exception("Error with matchmaker service");
+                    }
+                });
+        }
+
+        private static void PollMatchMake(string matchHost, Game game)
+        {
+            var path = matchHost + "/game/" + WWW.EscapeURL(game.id);
+
+            Debug.LogFormat("[GameClient] Polling: {0}", path);
+
+            Instance.client.PollGetHTTP(path, request =>
+            {
+                Debug.LogFormat("[GameClient] Polling Complete: {0}", request.downloadHandler.text);
+                game = JsonUtility.FromJson<Game>(request.downloadHandler.text);
+
+                // repeat if the game is still open
+                if (game.status == 0)
+                {
+                    return false;
+                }
+
+                Instance.client.SetHost(game.ip);
+                Instance.client.SetPort(game.port);
+                Instance.client.StartClient();
+                return true;
+
+            });
         }
 
         /// <summary>
@@ -95,6 +157,17 @@ namespace Client
         public static void Stop()
         {
             instance = null;
+        }
+
+        // class for javascript deserialisation
+        [Serializable]
+        private class Game
+        {
+            public string id;
+            public int status;
+            public string sessionID;
+            public int port;
+            public string ip;
         }
     }
 }

@@ -1,4 +1,7 @@
-﻿namespace Server
+﻿using System;
+using UnityEngine.Networking;
+
+namespace Server
 {
     public interface IUnityServer
     {
@@ -14,6 +17,12 @@
         /// <param name="port">The port to use</param>
         void SetPort(int port);
 
-        void PostHTTP(string host, string body);
+        /// <summary>
+        /// Send a POST HTTP Request, and call Action when complete
+        /// </summary>
+        /// <param name="host">the host</param>
+        /// <param name="body">the body to send (probably json)</param>
+        /// <param name="action">optional action to call</param>
+        void PostHTTP(string host, string body, Action<UnityWebRequest> action = null);
     }
 }

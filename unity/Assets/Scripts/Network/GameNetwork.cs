@@ -1,6 +1,8 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Text;
 using Client;
+using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Networking;
 using Server;
@@ -54,31 +56,6 @@ namespace Network
             GameServer.OnServerAddPlayer(numPlayers);
         }
 
-        public void PostHTTP(string host, string body)
-        {
-            StartCoroutine(AsyncPostHTTP(host, body));
-        }
-
-        private IEnumerator AsyncPostHTTP(string host, string body)
-        {
-            Debug.LogFormat("[GameNetwork] Posting to: {0} data: {1}", host, body);
-
-            byte[] bytes = Encoding.UTF8.GetBytes(body);
-            using (var post = UnityWebRequest.Put(host, bytes))
-            {
-                //switch it back to being post
-                post.method = UnityWebRequest.kHttpVerbPOST;
-
-                yield return post.Send();
-
-                if(post.isError) {
-                    Debug.Log(post.error);
-                }
-                else {
-                    Debug.Log("Post complete!");
-                }
-            }
-        }
 
         // --- Client Commands ---
 
@@ -92,7 +69,77 @@ namespace Network
             networkAddress = host;
         }
 
+        public void PollGetHTTP(string host, Func<UnityWebRequest,bool> lambda)
+        {
+            StartCoroutine(AsyncPollGetHTTP(host, lambda));
+        }
+
+        private IEnumerator AsyncPollGetHTTP(string host, Func<UnityWebRequest,bool> action)
+        {
+            Debug.LogFormat("[GameNetwork] Getting data: {0}", host);
+
+            using (var get = UnityWebRequest.Get(host))
+            {
+                yield return get.Send();
+
+                if (get.isError)
+                {
+                    Debug.Log(get.error);
+                }
+                else
+                {
+                    Debug.Log("[GameNetwork] Get Complete");
+                    var success = action(get);
+
+                    if (!success)
+                    {
+                        yield return new WaitForSeconds(2);
+                        StartCoroutine(AsyncPollGetHTTP(host, action));
+                    }
+                }
+            }
+        }
+
         // --- Client & Server Commands ---
+
+        public void PostHTTP(string host, string body, Action<UnityWebRequest> action = null)
+        {
+            StartCoroutine(AsyncPostHTTP(host, body, action));
+        }
+
+        private IEnumerator AsyncPostHTTP(string host, string body, Action<UnityWebRequest> action)
+        {
+            Debug.LogFormat("[GameNetwork] Posting to: {0} data: {1}", host, body);
+
+            // give it a null payload - because easy.
+            if (body == null)
+            {
+                body = "{}";
+            }
+
+            var bytes = Encoding.UTF8.GetBytes(body);
+
+            using (var post = UnityWebRequest.Put(host, bytes))
+            {
+                //switch it back to being post
+                post.method = UnityWebRequest.kHttpVerbPOST;
+
+                yield return post.Send();
+
+                if (post.isError)
+                {
+                    Debug.Log(post.error);
+                }
+                else
+                {
+                    Debug.Log("[GameNetwork] Post complete!");
+                    if (action != null)
+                    {
+                        action(post);
+                    }
+                }
+            }
+        }
 
         /// <summary>
         /// Change the Server/Client port settings from the default

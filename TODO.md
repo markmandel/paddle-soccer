@@ -1,9 +1,5 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Create a simple matchmaker
-    - implement /game/{id} (get)
-        - if doesn't exist, return 404
-        - if exists, return ip, port, session, id and status
 - Implement matchmaker into Unity project (leave server option)
     - if we get an ip from /game/ (post) then connect
     - Otherwise, poll /game/{id} until we get a ip and port

@@ -1,4 +1,5 @@
-﻿using UnityEngine.Networking;
+﻿using System;
+using UnityEngine.Networking;
 
 namespace Client
 {
@@ -24,5 +25,20 @@ namespace Client
         /// </summary>
         /// <returns>The Network client</returns>
         NetworkClient StartClient();
+
+        /// <summary>
+        /// Send a POST HTTP Request, and call Action when complete
+        /// </summary>
+        /// <param name="host">the host</param>
+        /// <param name="body">the body to send (probably json)</param>
+        /// <param name="action">optional lambda to call</param>
+        void PostHTTP(string host, string body, Action<UnityWebRequest> action = null);
+
+        /// <summary>
+        /// Polls a GET service until the lambda returns true
+        /// </summary>
+        /// <param name="host"></param>
+        /// <param name="lambda"></param>
+        void PollGetHTTP(string host, Func<UnityWebRequest, bool> lambda);
     }
 }
