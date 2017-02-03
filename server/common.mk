@@ -32,6 +32,10 @@
 #    |_|\__,_|_|  \__, |\___|\__|___/
 #                 |___/
 
+# build the docker image
+build: build-static-server
+	docker build --tag=$(TAG) $(current_path)
+
 # give me a shell
 shell:
 	docker run -it --entrypoint=/bin/sh $(TAG)

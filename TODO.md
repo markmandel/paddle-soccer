@@ -1,10 +1,6 @@
 # Unity Multiplayer Soccer - TODO List
 
 - Create a simple matchmaker
-    - implement /game/ (post)
-        - Pop list 
-            - if item, create session and return 200
-            - If no item, create id, push to list and return a 201 w/ game id
     - implement /game/{id} (get)
         - if doesn't exist, return 404
         - if exists, return ip, port, session, id and status
@@ -23,3 +19,4 @@
 - Specific Nodepools for game servers vs. everyone else.
 - Autoscaling
 - readiness check based on redis PING
+- Go through TODOS in the code

@@ -5,24 +5,27 @@ import (
 	"log"
 	"os"
 
-	"github.com/markmandel/paddle-soccer/sessions"
+	"github.com/markmandel/paddle-soccer/matchmaker"
 )
 
 const (
 	// port to listen on
 	portEnv = "PORT"
 	// address to listen to redis on
-	redisAddressEnv = "REDIS_SERVICE"
+	redisServiceEnv = "REDIS_SERVICE"
+	// sessions address
+	sessionsServiceEnv = "SESSIONS_SERVICE"
 )
 
 func main() {
 	// get environment variables
 	port := os.Getenv(portEnv)
-	// default for port
+	// default for portEnv
 	if port == "" {
 		port = "8080"
 	}
+
 	log.Print("[Info][Main] Creating server...")
-	s := sessions.NewServer(":"+port, os.Getenv(redisAddressEnv))
+	s := matchmaker.NewServer(":"+port, os.Getenv(redisServiceEnv), os.Getenv(sessionsServiceEnv))
 	s.Start()
 }

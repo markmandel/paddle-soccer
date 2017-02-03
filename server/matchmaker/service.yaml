@@ -1,0 +1,15 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matchmaker
+  labels:
+    name: matchmaker
+    visualize: "true"
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    role: matchmaker-server
+  type: LoadBalancer

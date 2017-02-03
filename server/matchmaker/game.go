@@ -1,0 +1,143 @@
+package matchmaker
+
+import (
+	"errors"
+	"fmt"
+	"log"
+
+	"github.com/garyburd/redigo/redis"
+	"k8s.io/client-go/pkg/util/uuid"
+)
+
+const (
+	// game match statuses
+	gameStatusOpen   = 0
+	gameStatusClosed = 1
+
+	//where the list of open games is stored
+	redisOpenGameListKey = "openGameList"
+
+	redisGamePrefix = "game:"
+)
+
+var (
+	errGameNotFound = errors.New("Game not found")
+)
+
+// Game is a game that is being match-made
+type Game struct {
+	ID        string `json:"id" redis:"id"`
+	Status    int    `json:"status" redis:"status"`
+	SessionID string `json:"sessionID,omitempty" redis:"sessionID"`
+	Port      int    `json:"port,omitempty" redis:"port"`
+	IP        string `json:"ip,omitempty" redis:"ip"`
+}
+
+// NewGame returns a new game, with a unique id
+func NewGame() *Game {
+	g := Game{Status: gameStatusOpen}
+	g.ID = string(uuid.NewUUID())
+
+	return &g
+}
+
+// Key returns the redis key for this Game
+func (g Game) Key() string {
+	return redisGamePrefix + g.ID
+}
+
+// updateGame updates the game data in redis
+// with the SessionID, Port, IP and status
+func updateGame(con redis.Conn, g *Game) error {
+	_, err := con.Do("HMSET", g.Key(), "status", g.Status, "sessionID", g.SessionID, "port", g.Port, "ip", g.IP)
+
+	if err != nil {
+		log.Printf("[Error][game] Error updating game: %#v, %v", *g, err)
+	}
+
+	return err
+}
+
+// getGame retrieves a game from redis, and then returns it
+func getGame(con redis.Conn, key string) (*Game, error) {
+	var g *Game
+	values, err := redis.Values(con.Do("HGETALL", key))
+
+	if err != nil {
+		log.Printf("[Error][games] Error getting hash for key %v. %v", key, err)
+		return g, err
+	}
+
+	if len(values) == 0 {
+		log.Printf("[Error][games] Could not find record for key: %v", key)
+		return g, fmt.Errorf("Could not find game for key: %v", key)
+	}
+
+	g = &Game{}
+	err = redis.ScanStruct(values, g)
+
+	if err != nil {
+		log.Printf("[Error][games] Error scanning struct: %v", err)
+	}
+
+	return g, err
+}
+
+// pushOpenGame pushes an open game onto the list
+func pushOpenGame(con redis.Conn, g *Game) error {
+	key := g.Key()
+	log.Printf("[Info][game] Pushing game onto open list: %v", key)
+
+	err := con.Send("MULTI")
+	if err != nil {
+		log.Printf("[Error][games] Could not Send MULTI: %v", err)
+		return err
+	}
+
+	send := con.Send("RPUSH", redisOpenGameListKey, key)
+	err = send
+
+	err = con.Send("HMSET", key, "id", g.ID,
+		"statis", g.Status)
+
+	if err != nil {
+		log.Printf("[Error][games] Could not Send HMSET: %v", err)
+		return err
+	}
+	err = con.Send("EXPIRE", key, 60*60)
+	if err != nil {
+		log.Printf("[Error][games] Could not Send EXPIRE: %v", err)
+		return err
+	}
+
+	if err != nil {
+		log.Printf("[Error][games] Could not RPUSH: %v", err)
+		return err
+	}
+
+	_, err = con.Do("EXEC")
+
+	if err != nil {
+		log.Printf("[Error][session] Could not save session to redis: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+// popOpenGame pops and open game off the list, and returns it's data structure
+func popOpenGame(con redis.Conn) (*Game, error) {
+	log.Print("[Info][game] Attempting to pop an open game")
+	key, err := redis.String(con.Do("LPOP", redisOpenGameListKey))
+	if err == redis.ErrNil {
+		log.Print("[Info][game] Game not found, returning")
+		return nil, errGameNotFound
+	}
+
+	log.Print("[Info][game] Found game, decoding...")
+
+	g, err := getGame(con, key)
+
+	log.Printf("[Info][game] Returning Game: %#v", g)
+	return g, err
+}

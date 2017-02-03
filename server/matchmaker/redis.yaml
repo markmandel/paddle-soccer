@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matchmaker-redis
+  labels:
+    visualize: "true"
+spec:
+  ports:
+  - port: 6379
+  selector:
+    role: matchmaker-redis
+---
+apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+  name: matchmaker-redis
+  labels:
+    visualize: "true"
+spec:
+  serviceName: "matchmaker-redis"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        role: matchmaker-redis
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: redis
+        image: redis:3
+        ports:
+        - containerPort: 6379
+        volumeMounts:
+        - name: data
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      annotations:
+        volume.alpha.kubernetes.io/storage-class: anything
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi

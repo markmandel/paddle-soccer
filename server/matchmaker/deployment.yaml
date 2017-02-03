@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: matchmaker
+spec:
+  replicas: 5
+  template:
+    metadata:
+      labels:
+        role: matchmaker-server
+        visualize: "true"
+        name: matchmaker
+        uses: matchmaker-redis
+    spec:
+      containers:
+      - name: matchmaker
+        image: gcr.io/${PROJECT}/matchmaker
+        imagePullPolicy: Always
+        env:
+          - name: REDIS_SERVICE # TODO: Use a configmap instead
+            value: matchmaker-redis:6379
+          - name: SESSIONS_SERVICE
+            value: "http://sessions"
+        ports:
+        - containerPort: 8080

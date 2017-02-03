@@ -1,4 +1,4 @@
-package sessions
+package matchmaker
 
 import (
 	"log"
@@ -7,32 +7,32 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	"github.com/markmandel/paddle-soccer/pkg"
-	"k8s.io/client-go/kubernetes"
 )
 
 // Version is the current api version number
-const Version string = "sessions:0.3"
+const Version string = "matchmaker:0.1"
 
 // Server is the http server instance
 type Server struct {
-	srv  *http.Server
-	pool *redis.Pool
-	cs   kubernetes.Interface
+	srv         *http.Server
+	pool        *redis.Pool
+	sessionAddr string
 }
 
 // Handler is the extended http.HandleFunc to provide context for this application
 type Handler func(*Server, http.ResponseWriter, *http.Request) error
 
 // NewServer returns the HTTP Server instance
-func NewServer(hostAddr, redisAddr string) *Server {
+func NewServer(hostAddr, redisAddr string, sessionAddr string) *Server {
 	if redisAddr == "" {
 		redisAddr = ":6379"
 	}
 
 	log.Printf("[Info][Server] Starting server version %v on port %v", Version, hostAddr)
 	log.Printf("[Info][Server] Connecting to Redis at %v", redisAddr)
+	log.Printf("[Info][Server] Connecting to Sessions at %v", sessionAddr)
 
-	s := &Server{pool: pkg.NewPool(redisAddr)}
+	s := &Server{pool: pkg.NewPool(redisAddr), sessionAddr: sessionAddr}
 
 	r := s.createRoutes()
 
@@ -51,20 +51,14 @@ func (s *Server) Start() {
 		log.Fatalf("[Error][Server] Could not connect to redis: %v", err)
 	}
 
-	s.cs, err = clientSet()
-	if err != nil {
-		log.Fatalf("[Error][Server] Could not connect to kubernetes api: %v", err)
-	}
-
 	log.Fatalf("[Error][Server] Error starting server: %v", s.srv.ListenAndServe())
 }
 
 // createRoutes creates the http routes for this application
 func (s *Server) createRoutes() http.Handler {
 	r := mux.NewRouter()
-	r.HandleFunc("/register", s.standardHandler(registerHandler)).Methods("POST")
-	r.HandleFunc("/session/{id}", s.standardHandler(getHandler)).Methods("GET")
-	r.HandleFunc("/session", s.standardHandler(createHandler)).Methods("POST")
+	r.HandleFunc("/game", s.standardHandler(gameHandler)).Methods("POST")
+	r.HandleFunc("/game/{id}", s.standardHandler(getHandler)).Methods("GET")
 
 	return r
 }
