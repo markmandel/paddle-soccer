@@ -18,11 +18,11 @@ namespace Server
         void SetPort(int port);
 
         /// <summary>
-        /// Send a POST HTTP Request, and call Action when complete
+        /// Send a POST HTTP Request, and call the lambda when complete
         /// </summary>
         /// <param name="host">the host</param>
         /// <param name="body">the body to send (probably json)</param>
-        /// <param name="action">optional action to call</param>
-        void PostHTTP(string host, string body, Action<UnityWebRequest> action = null);
+        /// <param name="lambda">optional lambda to call</param>
+        void PostHTTP(string host, string body, Action<UnityWebRequest> lambda = null);
     }
 }

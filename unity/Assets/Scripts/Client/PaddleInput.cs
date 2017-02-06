@@ -4,7 +4,9 @@ using UnityEngine.Networking;
 
 namespace Client
 {
-    // Moves the paddle around!
+    /// <summary>
+    /// Moves the paddle around!
+    /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(BoxCollider))]
     public class PaddleInput : NetworkBehaviour
@@ -38,12 +40,18 @@ namespace Client
 
         // --- Messages ---
 
+        /// <summary>
+        /// Gab teh rigidbody and box collider
+        /// </summary>
         private void Start()
         {
             rb = GetComponent<Rigidbody>();
             box = GetComponent<BoxCollider>();
         }
 
+        /// <summary>
+        /// Handles kicks, if local player
+        /// </summary>
         private void Update()
         {
             if (isLocalPlayer)
@@ -55,7 +63,9 @@ namespace Client
             }
         }
 
-        // Handle forward, left and right
+        /// <summary>
+        /// Handels moving the rigidbody around via input
+        /// </summary>
         private void FixedUpdate()
         {
             if (isLocalPlayer)
@@ -68,35 +78,44 @@ namespace Client
 
         // --- Functions ---
 
-        // Basically work out what speed and direction we *want* to be
-        // going in, and provide a force that will do such a thing
-        // Credit and inspiration from: http://wiki.unity3d.com/index.php?title=RigidbodyFPSWalker
+        /// <summary>
+        /// Basically work out what speed and direction we *want* to be
+        /// going in, and provide a force that will do such a thing
+        /// Credit and inspiration from: http://wiki.unity3d.com/index.php?title=RigidbodyFPSWalker
+        /// </summary>
         private void KeyboardHorizontalInput()
         {
-            float deltaX = Input.GetAxis("Horizontal");
-            float deltaY = Input.GetAxis("Vertical");
+            var deltaX = Input.GetAxis("Horizontal");
+            var deltaY = Input.GetAxis("Vertical");
 
             // skip this whole thing, if there is no input
             if(!(deltaX == 0 && deltaY == 0))
             {
-                Vector3 targetVelocity = new Vector3(deltaX, 0, deltaY) * horizontalSpeed;
+                var targetVelocity = new Vector3(deltaX, 0, deltaY) * horizontalSpeed;
                 // convert from local to world
                 targetVelocity = transform.TransformDirection(targetVelocity);
 
                 // Apply a force, to reach the target velocity
-                Vector3 currentVelocity = rb.velocity;
-                Vector3 delta = targetVelocity - currentVelocity;
+                var currentVelocity = rb.velocity;
+                var delta = targetVelocity - currentVelocity;
                 rb.AddForce(delta, ForceMode.VelocityChange);
             }
         }
 
+        /// <summary>
+        /// Manages the rotation of the player
+        /// </summary>
+        /// <param name="axis"></param>
         private void PlayerRotation(float axis)
         {
             axis = axis * rotationalSpeed;
-            Quaternion rotation = Quaternion.Euler(0, transform.localEulerAngles.y + axis, 0);
+            var rotation = Quaternion.Euler(0, transform.localEulerAngles.y + axis, 0);
             rb.MoveRotation(rotation);
         }
 
+        /// <summary>
+        /// Optional keyboard rotation. Handy when using a trackpad.
+        /// </summary>
         private void KeyboardRotation()
         {
             if(Input.GetKey(KeyCode.LeftBracket))
@@ -109,18 +128,22 @@ namespace Client
             }
         }
 
+        /// <summary>
+        /// Kicks the ball. (Currently not working)
+        /// TODO: Needs to be moved to a RPC as the ball is server side.
+        /// </summary>
         private void KickBall()
         {
-            Vector3 diff = new Vector3(0, box.size.y / kickAngle, 0);
-            Vector3 origin = transform.position - transform.TransformVector(diff);
+            var diff = new Vector3(0, box.size.y / kickAngle, 0);
+            var origin = transform.position - transform.TransformVector(diff);
 
             RaycastHit hit;
             if(Physics.Raycast(origin, transform.forward, out hit, kickDistance))
             {
                 if(hit.collider.name == Ball.Name)
                 {
-                    Rigidbody crb = hit.collider.GetComponent<Rigidbody>();
-                    Vector3 force = -kickForce * hit.normal;
+                    var crb = hit.collider.GetComponent<Rigidbody>();
+                    var force = -kickForce * hit.normal;
                     crb.AddForceAtPosition(force, hit.point, ForceMode.Impulse);
                 }
             }

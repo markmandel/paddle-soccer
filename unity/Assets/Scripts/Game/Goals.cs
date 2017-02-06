@@ -1,13 +1,15 @@
 ﻿using System;
-using Game.Common;
 using UnityEngine;
 
 namespace Game
 {
-    public class Goals
+    /// <summary>
+    /// Utility for managing what happens to Goals.
+    /// </summary>
+    public static class Goals
     {
-        public static readonly string PlayerOneGoal = "/Soccerfield/PlayerGoal.1";
-        public static readonly string PlayerTwoGoal = "/Soccerfield/PlayerGoal.2";
+        private static readonly string PlayerOneGoal = "/Soccerfield/PlayerGoal.1";
+        private static readonly string PlayerTwoGoal = "/Soccerfield/PlayerGoal.2";
 
         public static GameObject FindPlayerTwoGoal()
         {
@@ -19,8 +21,12 @@ namespace Game
             return GameObject.Find(PlayerOneGoal);
         }
 
-        // returns a event handler for the TriggerObservable that
-        // only fires when the ball goes into the goal.
+        /// <summary>
+        /// Rseturns a event handler for the TriggerObservable that
+        /// only fires when the ball goes into the goal.
+        /// </summary>
+        /// <param name="action"></param>
+        /// <returns></returns>
         public static TriggerObservable.Triggered OnBallGoal(Action<Collider> action)
         {
             return collider =>

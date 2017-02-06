@@ -1,10 +1,11 @@
 ﻿using Game;
-using Game.Common;
 using UnityEngine;
 
 namespace Client.Controllers
 {
-    // Manages the score for both players
+    /// <summary>
+    /// Manages the score for both players
+    /// </summary>
     public class ScoreController : MonoBehaviour
     {
         private int playerOneScore;
@@ -12,6 +13,9 @@ namespace Client.Controllers
 
         // --- Messages ---
 
+        /// <summary>
+        /// Attaches handlers to the goals
+        /// </summary>
         private void Start()
         {
             playerOneScore = 0;
@@ -28,6 +32,11 @@ namespace Client.Controllers
 
         // --- Functions --
 
+        /// <summary>
+        /// Debug the score. Currently only client side.
+        /// TODO: Move this to server side.
+        /// </summary>
+        /// <param name="_"></param>
         private void OnGoal(Collider _)
         {
             Debug.Log("GOOOAAAAALL!!!");

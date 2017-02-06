@@ -2,13 +2,16 @@
 using System.Collections;
 using System.Text;
 using Client;
-using NUnit.Framework;
+using Server;
 using UnityEngine;
 using UnityEngine.Networking;
-using Server;
 
 namespace Network
 {
+    /// <summary>
+    /// The overall network manager. Delegates as much work as possible to
+    /// GameClient and GameServer.
+    /// </summary>
     public class GameNetwork : NetworkManager, IUnityServer, IUnityClient
     {
         public readonly string Version = "0.3";
@@ -25,7 +28,7 @@ namespace Network
         {
             Debug.LogFormat("[GameNetwork] Starting Client or Server? {0}", Version);
 
-            if (PlayerInfo.IsHeadless())
+            if (UnityInfo.IsHeadless())
             {
                 Debug.Log("[GameNetwork] Starting Server");
                 GameServer.Start(this);
@@ -33,23 +36,36 @@ namespace Network
             else
             {
                 Debug.Log("[GameNetwork] Starting Client");
-                GameClient.Start(this, System.Environment.GetCommandLineArgs());
+                GameClient.Start(this, Environment.GetCommandLineArgs());
             }
         }
 
         // --- Server Commands ---
+
+        /// <summary>
+        /// Run when the server is started. Delegates to GameServer.OnServerConnect
+        /// </summary>
+        /// <param name="conn"></param>
         public override void OnServerConnect(NetworkConnection conn)
         {
             base.OnServerConnect(conn);
             GameServer.OnServerConnect(conn);
         }
 
+        /// <summary>
+        /// Runs when Server stops. Delegates to GameServer.Stop
+        /// </summary>
         public override void OnStopServer()
         {
             base.OnStopServer();
             GameServer.Stop();
         }
 
+        /// <summary>
+        /// Run when the server recieves a new player. Delegates to GameServer.OnServerAddPlayer
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <param name="playerControllerId"></param>
         public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId)
         {
             base.OnServerAddPlayer(conn, playerControllerId);
@@ -69,12 +85,23 @@ namespace Network
             networkAddress = host;
         }
 
-        public void PollGetHTTP(string host, Func<UnityWebRequest,bool> lambda)
+        /// <summary>
+        /// Asyncronously polls a HTTP endpoint every 2 seconds, until lambda returns true
+        /// UnityWebRequest is passed to lambda on each invocation
+        /// </summary>
+        /// <param name="host">The host url to post to</param>
+        /// <param name="lambda">lambda called on each request</param>
+        public void PollGetHTTP(string host, Func<UnityWebRequest, bool> lambda)
         {
             StartCoroutine(AsyncPollGetHTTP(host, lambda));
         }
 
-        private IEnumerator AsyncPollGetHTTP(string host, Func<UnityWebRequest,bool> action)
+        /// <summary>
+        /// Implementation of asyncronous polling of a HTTP endpoint
+        /// </summary>
+        /// <param name="host">the host url to make the GET Request</param>
+        /// <param name="lambda">The lambda that is called on completion</param>
+        private IEnumerator AsyncPollGetHTTP(string host, Func<UnityWebRequest, bool> lambda)
         {
             Debug.LogFormat("[GameNetwork] Getting data: {0}", host);
 
@@ -89,12 +116,12 @@ namespace Network
                 else
                 {
                     Debug.Log("[GameNetwork] Get Complete");
-                    var success = action(get);
+                    var success = lambda(get);
 
                     if (!success)
                     {
                         yield return new WaitForSeconds(2);
-                        StartCoroutine(AsyncPollGetHTTP(host, action));
+                        StartCoroutine(AsyncPollGetHTTP(host, lambda));
                     }
                 }
             }
@@ -102,12 +129,25 @@ namespace Network
 
         // --- Client & Server Commands ---
 
-        public void PostHTTP(string host, string body, Action<UnityWebRequest> action = null)
+        /// <summary>
+        /// Asyncronously calls the HTTP POST host with the attached body.
+        /// Calls lambda on successful post
+        /// </summary>
+        /// <param name="host">The host url to call</param>
+        /// <param name="body">Body string to send as the POST body</param>
+        /// <param name="lambda">Lambda called on successful post</param>
+        public void PostHTTP(string host, string body, Action<UnityWebRequest> lambda = null)
         {
-            StartCoroutine(AsyncPostHTTP(host, body, action));
+            StartCoroutine(AsyncPostHTTP(host, body, lambda));
         }
 
-        private IEnumerator AsyncPostHTTP(string host, string body, Action<UnityWebRequest> action)
+        /// <summary>
+        /// Implementation of asyncronous call to POST HTTP
+        /// </summary>
+        /// <param name="host">The host url to call</param>
+        /// <param name="body">Body string to send as the POST body</param>
+        /// <param name="lambda">Lambda called on successful post</param>
+        private IEnumerator AsyncPostHTTP(string host, string body, Action<UnityWebRequest> lambda)
         {
             Debug.LogFormat("[GameNetwork] Posting to: {0} data: {1}", host, body);
 
@@ -133,9 +173,9 @@ namespace Network
                 else
                 {
                     Debug.Log("[GameNetwork] Post complete!");
-                    if (action != null)
+                    if (lambda != null)
                     {
-                        action(post);
+                        lambda(post);
                     }
                 }
             }

@@ -1,7 +1,9 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Autoscaling
+- Test and see if it works on Minikube
 - Cleanup, and write a stack of tests (especially the sessions Go code)
+- Get in open source pipeline.
+- Autoscaling
 - Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.
 - Track scores once the go through the goal area (on screen)

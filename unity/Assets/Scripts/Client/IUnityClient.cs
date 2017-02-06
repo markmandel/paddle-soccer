@@ -31,14 +31,14 @@ namespace Client
         /// </summary>
         /// <param name="host">the host</param>
         /// <param name="body">the body to send (probably json)</param>
-        /// <param name="action">optional lambda to call</param>
-        void PostHTTP(string host, string body, Action<UnityWebRequest> action = null);
+        /// <param name="lambda">optional lambda to call</param>
+        void PostHTTP(string host, string body, Action<UnityWebRequest> lambda = null);
 
         /// <summary>
         /// Polls a GET service until the lambda returns true
         /// </summary>
-        /// <param name="host"></param>
-        /// <param name="lambda"></param>
+        /// <param name="host">The host url to call</param>
+        /// <param name="lambda">The lambda to call. Will continue to poll until true is returned</param>
         void PollGetHTTP(string host, Func<UnityWebRequest, bool> lambda);
     }
 }

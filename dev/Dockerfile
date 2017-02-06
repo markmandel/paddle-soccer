@@ -61,12 +61,12 @@ RUN rm -r /go/pkg
 
 WORKDIR /root
 
+#install kubectl visualiser
+RUN git clone --depth=5 -b "kubernetes-1.2" https://github.com/saturnism/gcp-live-k8s-visualizer.git
 # K8s proxy
 EXPOSE 8001
 
 ADD startup.sh startup.sh
 RUN chmod +x startup.sh
-
-
 
 EXPOSE 8080

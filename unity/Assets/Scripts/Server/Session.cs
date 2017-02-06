@@ -2,6 +2,9 @@
 
 namespace Server
 {
+    /// <summary>
+    /// Serialisable session - for talking to the session server
+    /// </summary>
     [Serializable]
     public class Session
     {

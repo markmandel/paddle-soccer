@@ -1,48 +1,47 @@
 ﻿using UnityEngine;
 
-namespace Client.Common
+/// <summary>
+/// Simply writes out to console when a collision
+/// occurs, and tells you with what.
+/// </summary>
+public class CollisionDebug : MonoBehaviour
 {
-    // Simply writes out to console when a collision
-    // occurs, and tells you with what.
-    public class CollisionDebug : MonoBehaviour
+    // --- Handlers ---
+
+    void OnCollisionEnter(Collision collision)
     {
-        // --- Handlers ---
+        Log(collision.gameObject, "Collision Enter");
+    }
 
-        void OnCollisionEnter(Collision collision)
-        {
-            Log(collision.gameObject, "Collision Enter");
-        }
+    void OnCollisionExit(Collision collision)
+    {
+        Log(collision.gameObject, "Collision Exit");
+    }
 
-        void OnCollisionExit(Collision collision)
-        {
-            Log(collision.gameObject, "Collision Exit");
-        }
+    void OnCollisionStay(Collision collision)
+    {
+        Log(collision.gameObject, "Collision Stay");
+    }
 
-        void OnCollisionStay(Collision collision)
-        {
-            Log(collision.gameObject, "Collision Stay");
-        }
+    void OnTriggerEnter(Collider other)
+    {
+        Log(other.gameObject, "Trigger Enter");
+    }
 
-        void OnTriggerEnter(Collider other)
-        {
-            Log(other.gameObject, "Trigger Enter");
-        }
+    void OnTriggerExit(Collider other)
+    {
+        Log(other.gameObject, "Trigger Exit");
+    }
 
-        void OnTriggerExit(Collider other)
-        {
-            Log(other.gameObject, "Trigger Exit");
-        }
+    void OnTriggerStay(Collider other)
+    {
+        Log(other.gameObject, "Trigger Stay");
+    }
 
-        void OnTriggerStay(Collider other)
-        {
-            Log(other.gameObject, "Trigger Stay");
-        }
+    // --- Functions ---
 
-        // --- Functions ---
-
-        private void Log(GameObject obj, string category)
-        {
-            Debug.Log(string.Format("[{0}] {1} Event: {2}", name, category, obj.name));
-        }
+    private void Log(GameObject obj, string category)
+    {
+        Debug.Log(string.Format("[{0}] {1} Event: {2}", name, category, obj.name));
     }
 }

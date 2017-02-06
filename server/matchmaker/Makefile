@@ -42,6 +42,9 @@ src_path = $(current_path)/src
 
 include ../common.mk
 
+# deploy everything
+deploy-all: deploy-redis deploy-rs deploy-service
+
 # deploy the replica set
 deploy-rs:
 	$(MAKE) FILE=deployment template-apply

@@ -2,7 +2,9 @@
 
 namespace Client
 {
-    // Follows at a distance behind a specified gameobject
+    /// <summary>
+    /// Follows at a distance behind a specified gameobject
+    /// </summary>
     public class FollowBehind : MonoBehaviour
     {
         [Tooltip("The transform to follow")]
@@ -12,14 +14,17 @@ namespace Client
         [Tooltip("Distance to follow from")]
         private float distance = 2.2f;
 
-        void Update()
+        /// <summary>
+        /// Set the position of the camera behind the player on each frame
+        /// </summary>
+        private void Update()
         {
             if(target != null)
             {
                 // maintain the y position
-                float yPosition = transform.position.y;
+                var yPosition = transform.position.y;
                 // maintain the x rotation
-                float xRotation = transform.localEulerAngles.x;
+                var xRotation = transform.localEulerAngles.x;
 
                 Vector3 diff = target.forward * distance;
                 diff = target.position - diff;

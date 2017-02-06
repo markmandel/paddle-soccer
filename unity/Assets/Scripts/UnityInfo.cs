@@ -1,6 +1,9 @@
 ﻿using UnityEngine.Rendering;
 
-public class PlayerInfo
+/// <summary>
+/// Utilities for finding out information about the Unity instance
+/// </summary>
+public static class UnityInfo
 {
     /// <summary>
     /// Detect headless mode (which has graphicsDeviceType Null)

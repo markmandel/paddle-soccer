@@ -159,7 +159,9 @@ namespace Client
             instance = null;
         }
 
-        // class for javascript deserialisation
+        /// <summary>
+        /// Class for javascript deserialisation
+        /// </summary>
         [Serializable]
         private class Game
         {

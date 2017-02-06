@@ -41,8 +41,7 @@ test:
 
 # run the visualiser
 visualise:
-	#kubectl proxy --www=/home/$(shell whoami)/gcp-live-k8s-visualizer --www-prefix=/static/ --api-prefix=/api/ --address="0.0.0.0"
-	kubectl port-forward $$(kubectl get pod --selector=weave-scope-component=app -o jsonpath='{.items..metadata.name}') 8001
+	kubectl proxy --www=/home/$(shell whoami)/gcp-live-k8s-visualizer --www-prefix=/static/ --api-prefix=/api/ --address="0.0.0.0"
 
 # bring up the kubectl proxy if you want to look at it.
 kubectl-proxy:
