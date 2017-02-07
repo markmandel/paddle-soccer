@@ -9,8 +9,13 @@
 - Make it so a player can't go into the goal area
 - Put a red and blue highlight on each goal, so you can tell which is which
 - Animate paddle on kick
-- Does it make sense to shift creation to a ThirdPartyResource - could be more flexible. Allow people to set their own config vars, etc
-- Specific Nodepools for game servers vs. everyone else.
+- Make Thirdpart resource
+ - Essentially a Pod definition with a Game-Session type
+ - Overwrite name, make sure SESSION_NAME is an env var
+ - HostNetwork = true
+ - RestartPolicy = Never
+ - add a nice label, so it's easy to find?
 - readiness check based on redis PING
 - http health check
 - Go through TODOS in the code
+- Specific Nodepools for game servers vs. everyone else.
