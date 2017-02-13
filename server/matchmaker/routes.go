@@ -8,8 +8,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// GameHandler is the http request handler
-// for posting of Game matchmaking
+// gameHandler is the handler to post to, such that game match-making can occur
 func gameHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	con := s.pool.Get()
 	defer con.Close()
@@ -55,8 +54,8 @@ func gameHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// get the details of a game that is currently running / waiting for a second
-// person to join
+// getHandler is a handler tp get the details of a game
+// that is currently running / waiting for a second person to join
 func getHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	con := s.pool.Get()
 	defer con.Close()

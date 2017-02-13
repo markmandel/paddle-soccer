@@ -17,7 +17,7 @@ spec:
         image: gcr.io/${PROJECT}/matchmaker
         imagePullPolicy: Always
         env:
-          - name: REDIS_SERVICE # TODO: Use a configmap instead
+          - name: REDIS_SERVICE
             value: matchmaker-redis:6379
           - name: SESSIONS_SERVICE
             value: "http://sessions"

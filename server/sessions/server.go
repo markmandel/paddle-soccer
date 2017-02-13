@@ -46,7 +46,7 @@ func NewServer(hostAddr, redisAddr string, image string) *Server {
 	return s
 }
 
-// Start starts the HTTP server on the given port
+// Start starts the HTTP server
 func (s *Server) Start() {
 	err := pkg.WaitForConnection(s.pool)
 	if err != nil {
@@ -61,7 +61,7 @@ func (s *Server) Start() {
 	log.Fatalf("[Error][Server] Error starting server: %v", s.srv.ListenAndServe())
 }
 
-// createRoutes creates the http routes for this application
+// createRoutes returns the http routes for this application
 func (s *Server) createRoutes() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/register", s.standardHandler(registerHandler)).Methods("POST")

@@ -27,8 +27,8 @@ type Session struct {
 }
 
 // createSession sends a message to the session manager to create
-// a new game server session. Waits for the IP and Port to become active
-// and returns a fully populated Session struct
+// a new game server session. Waits for the game server IP and Port to become active
+// and returns a fully populated Session
 func (s *Server) createSession(con redis.Conn, g *Game) (*Game, error) {
 	path := s.sessionAddr + "/session"
 	log.Printf("[Info][sessions] Creating a new session: %v", path)
@@ -64,7 +64,7 @@ func (s *Server) createSession(con redis.Conn, g *Game) (*Game, error) {
 }
 
 // getSessionIPAndPort returns a Session with the IP and Port of a running
-// game session. Will time out after 30 seconds.
+// game session. Will time out after 30 attempts, with a 1 second wait in between.
 func (s *Server) getSessionIPAndPort(sess Session) (Session, error) {
 	var body io.ReadCloser
 

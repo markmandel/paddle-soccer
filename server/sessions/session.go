@@ -16,8 +16,8 @@ type Session struct {
 
 const redisSessionPrefix = "Session:"
 
-// ErrorSessionNotFound is returned when you
-// can't find the Session in redis
+// ErrorSessionNotFound is returned when the Session can't be
+// found in redis
 var ErrorSessionNotFound = errors.New("Could not find the requested session")
 
 // storeSession store the session in redis
@@ -54,6 +54,7 @@ func (s *Server) storeSession(sess Session) error {
 	return err
 }
 
+// getSession returns a Session from redis
 func (s *Server) getSession(id string) (Session, error) {
 	con := s.pool.Get()
 	defer con.Close()

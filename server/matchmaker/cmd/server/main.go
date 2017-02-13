@@ -9,14 +9,18 @@ import (
 )
 
 const (
-	// port to listen on
+	// portEnv is the environment variable to
+	// use to find the port to listen on
 	portEnv = "PORT"
+	// redisAddressEnv is the environment variable to find the
 	// address to listen to redis on
 	redisServiceEnv = "REDIS_SERVICE"
-	// sessions address
+	// sessionsServiceEnv is the environment variable for the url
+	// the session service can be found
 	sessionsServiceEnv = "SESSIONS_SERVICE"
 )
 
+// main function for starting the server
 func main() {
 	// get environment variables
 	port := os.Getenv(portEnv)

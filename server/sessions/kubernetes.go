@@ -11,7 +11,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-// clientSet get the producton kubernetes clientset
+// clientSet returns the production Kubernetes clientSet
 func clientSet() (kubernetes.Interface, error) {
 	log.Print("[Info][Kubernetes] Connecting to Kubernetes API...")
 	config, err := rest.InClusterConfig()
@@ -28,7 +28,7 @@ func clientSet() (kubernetes.Interface, error) {
 	return cs, nil
 }
 
-// hostNameAndIP returns a map of hostname (key) to external IP (value)
+// hostNameAndIP returns a map of Kubernetes node hostname (key) to external IP (value)
 func (s *Server) hostNameAndIP() (map[string]string, error) {
 	result := make(map[string]string)
 	list, err := s.cs.CoreV1().Nodes().List(v1.ListOptions{})
@@ -74,7 +74,7 @@ func (s *Server) externalNodeIPofPod(sess Session, m map[string]string) (string,
 	return m[nodeName], nil
 }
 
-// createSessionPod creates a pod for the session
+// createSessionPod creates a pod containing the game server, for a game session
 func (s *Server) createSessionPod() (string, error) {
 	log.Print("[Info][create] Creating new game session")
 	namespace := "default"

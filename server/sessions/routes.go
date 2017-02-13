@@ -10,7 +10,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// createHandler registration of a new game session
+// createHandler is a handler for creating a game server session pod
 func createHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	log.Printf("[Info][create] creating a game session with image: %v", s.gameServerImage)
 
@@ -25,7 +25,8 @@ func createHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	return json.NewEncoder(w).Encode(&sess)
 }
 
-// RegisterHandler registration of a new game session
+// registerHandler is a handler for a new game session to register itself with this
+// system, so that we know what port the game server has started up on
 func registerHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	var sess Session
 
@@ -67,7 +68,8 @@ func registerHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	return s.storeSession(sess)
 }
 
-// getHandler for retrieving information about a game session
+// getHandler is a handler for retrieving information about a specific
+// game server session
 func getHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	vars := mux.Vars(r)
 	id, ok := vars["id"]

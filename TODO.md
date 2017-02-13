@@ -1,8 +1,6 @@
 # Unity Multiplayer Soccer - TODO List
 
 - Test and see if it works on Minikube
-- Cleanup, and write a stack of tests (especially the sessions Go code)
-- Get in open source pipeline.
 - Autoscaling
 - Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.
@@ -11,13 +9,6 @@
 - Make it so a player can't go into the goal area
 - Put a red and blue highlight on each goal, so you can tell which is which
 - Animate paddle on kick
-- Make Thirdpart resource
- - Essentially a Pod definition with a Game-Session type
- - Overwrite name, make sure SESSION_NAME is an env var
- - HostNetwork = true
- - RestartPolicy = Never
- - add a nice label, so it's easy to find?
 - readiness check based on redis PING
 - http health check
-- Go through TODOS in the code
 - Specific Nodepools for game servers vs. everyone else.

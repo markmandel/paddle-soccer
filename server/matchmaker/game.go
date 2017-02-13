@@ -10,21 +10,27 @@ import (
 )
 
 const (
-	// game match statuses
-	gameStatusOpen   = 0
+	// gameStatusOpen means the game is open, and available to be joined
+	gameStatusOpen = 0
+	// gameStatusClosed means the game is closed, and currently being played
 	gameStatusClosed = 1
 
-	//where the list of open games is stored
+	// redisOpenGameListKey is the redis key for
+	// where the list of open games is stored
 	redisOpenGameListKey = "openGameList"
 
+	// redisGamePrefix is the prefix for the key
+	// for where game session data is stored in redis
 	redisGamePrefix = "game:"
 )
 
 var (
+	// errGameNotFound error returned when a game
+	// can't be found
 	errGameNotFound = errors.New("Game not found")
 )
 
-// Game is a game that is being match-made
+// Game represents a game that is being/has been match-made
 type Game struct {
 	ID        string `json:"id" redis:"id"`
 	Status    int    `json:"status" redis:"status"`
@@ -33,7 +39,7 @@ type Game struct {
 	IP        string `json:"ip,omitempty" redis:"ip"`
 }
 
-// NewGame returns a new game, with a unique id
+// NewGame returns a game, with a unique id
 func NewGame() *Game {
 	g := Game{Status: gameStatusOpen}
 	g.ID = string(uuid.NewUUID())
@@ -83,7 +89,7 @@ func getGame(con redis.Conn, key string) (*Game, error) {
 	return g, err
 }
 
-// pushOpenGame pushes an open game onto the list
+// pushOpenGame pushes an open game onto the list of open games
 func pushOpenGame(con redis.Conn, g *Game) error {
 	key := g.Key()
 	log.Printf("[Info][game] Pushing game onto open list: %v", key)
@@ -118,14 +124,14 @@ func pushOpenGame(con redis.Conn, g *Game) error {
 	_, err = con.Do("EXEC")
 
 	if err != nil {
-		log.Printf("[Error][session] Could not save session to redis: %v", err)
+		log.Printf("[Error][games] Could not save session to redis: %v", err)
 		return err
 	}
 
 	return nil
 }
 
-// popOpenGame pops and open game off the list, and returns it's data structure
+// popOpenGame pops an open game off the list, and returns it's data structure
 func popOpenGame(con redis.Conn) (*Game, error) {
 	log.Print("[Info][game] Attempting to pop an open game")
 	key, err := redis.String(con.Do("LPOP", redisOpenGameListKey))

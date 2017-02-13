@@ -9,7 +9,7 @@ import (
 )
 
 // WaitForConnection pings redis with an exponential backoff,
-// to wait until we are connected connected.
+// to wait until we are connected to redis.
 func WaitForConnection(pool *redis.Pool) error {
 
 	return backoff.Retry(func() error {
@@ -27,7 +27,7 @@ func WaitForConnection(pool *redis.Pool) error {
 	}, backoff.NewExponentialBackOff())
 }
 
-// NewPool returns a redis pool with the standard configuration
+// NewPool returns a new redis pool with the standard configuration
 func NewPool(address string) *redis.Pool {
 	return &redis.Pool{
 		MaxIdle:     3,
