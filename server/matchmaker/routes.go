@@ -47,7 +47,7 @@ func gameHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	} else {
 		// creates the running server, and returns
 		// a game with the ip and port populated
-		g, err = s.createSession(con, g)
+		g, err = s.createSessionForGame(con, g)
 		if err != nil {
 			return err
 		}
@@ -61,7 +61,7 @@ func gameHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 
 	err = json.NewEncoder(w).Encode(g)
 	if err != nil {
-		log.Printf("Error encoding JSON: %v", err)
+		log.Printf("[Error][game_route] encoding JSON: %v", err)
 		return err
 	}
 

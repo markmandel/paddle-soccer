@@ -12,3 +12,5 @@
 - readiness check based on redis PING
 - http health check
 - Specific Nodepools for game servers vs. everyone else.
+- Update error handling to https://github.com/pkg/errors
+- Update logging to https://github.com/sirupsen/logrus

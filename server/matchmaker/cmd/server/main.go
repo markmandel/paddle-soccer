@@ -45,5 +45,7 @@ func main() {
 
 	log.Print("[Info][Main] Creating server...")
 	s := matchmaker.NewServer(":"+port, os.Getenv(redisServiceEnv), os.Getenv(sessionsServiceEnv))
-	s.Start()
+	if err := s.Start(); err != nil {
+		log.Fatalf("[Error][Main] %v", err)
+	}
 }

@@ -16,13 +16,12 @@ package matchmaker
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
-
-	"fmt"
 
 	"github.com/garyburd/redigo/redis"
 )
@@ -40,10 +39,10 @@ type Session struct {
 	IP   string `json:"ip,omitempty"`
 }
 
-// createSession sends a message to the session manager to create
+// createSessionForGame sends a message to the session manager to create
 // a new game server session. Waits for the game server IP and Port to become active
-// and returns a fully populated Session
-func (s *Server) createSession(con redis.Conn, g *Game) (*Game, error) {
+// and returns a fully populated Game, with the sessions details
+func (s *Server) createSessionForGame(con redis.Conn, g *Game) (*Game, error) {
 	path := s.sessionAddr + "/session"
 	log.Printf("[Info][sessions] Creating a new session: %v", path)
 	r, err := http.Post(path, "application/json", nil)
@@ -69,12 +68,7 @@ func (s *Server) createSession(con redis.Conn, g *Game) (*Game, error) {
 	g.IP = sess.IP
 	g.Status = gameStatusClosed
 
-	err = updateGame(con, g)
-	if err != nil {
-		return g, err
-	}
-
-	return g, nil
+	return g, updateGame(con, g)
 }
 
 // getSessionIPAndPort returns a Session with the IP and Port of a running
@@ -86,7 +80,6 @@ func (s *Server) getSessionIPAndPort(sess Session) (Session, error) {
 		req := s.sessionAddr + "/session/" + url.QueryEscape(sess.ID)
 		log.Printf("[Info][sessions] Requesting Session Data: %v", req)
 		res, err := http.Get(req)
-		defer res.Body.Close()
 		if err != nil {
 			log.Printf("[Error][sessions] Error getting session info: %v", err)
 			return sess, err
@@ -96,10 +89,15 @@ func (s *Server) getSessionIPAndPort(sess Session) (Session, error) {
 			body = res.Body
 			break
 		}
+		err = res.Body.Close()
+		if err != nil {
+			log.Printf("[Warn][sessions] Could not close body: %v", err)
+		}
 
 		log.Printf("[Info][sessions] Session %v data not found, trying again", sess.ID)
 		time.Sleep(time.Second)
 	}
+	defer body.Close()
 
 	if body == nil {
 		err := fmt.Errorf("Could not get session %v data", sess.ID)

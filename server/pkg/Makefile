@@ -19,7 +19,7 @@
 #     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___|___/
 #
 
-PACKAGE=$(PACKAGE_ROOT)/pkg
+PACKAGE=$(PACKAGE_ROOT)/pkg/redis
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___

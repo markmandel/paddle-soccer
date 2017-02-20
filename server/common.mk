@@ -74,7 +74,7 @@ check-code:
 	@echo "...Complete"
 
 test: check-code
-	go test $(PACKAGE)
+	go test -race $(PACKAGE)
 
 bin-dir:
 	-mkdir -p $(current_path)/bin

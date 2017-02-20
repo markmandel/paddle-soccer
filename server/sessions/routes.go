@@ -90,7 +90,7 @@ func getHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 
 	if !ok {
 		msg := "No session id provided"
-		log.Printf("[Error][get]" + msg)
+		log.Printf("[Error][get] %v", msg)
 		http.Error(w, msg, http.StatusNotFound)
 		return nil
 	}
@@ -99,14 +99,11 @@ func getHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 
 	sess, err := s.getSession(id)
 
-	if err != nil {
+	if err == ErrSessionNotFound {
+		http.Error(w, fmt.Sprintf("Could not find session for id: %v", id), http.StatusNotFound)
+		return nil
+	} else if err != nil {
 		log.Printf("[Error][get] Error getting session: %v", err)
-
-		if err == ErrorSessionNotFound {
-			http.Error(w, fmt.Sprintf("Could not find session for id: %v", id), http.StatusNotFound)
-			return nil
-		}
-
 		return err
 	}
 

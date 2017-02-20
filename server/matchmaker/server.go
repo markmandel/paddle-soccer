@@ -20,7 +20,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
-	"github.com/markmandel/paddle-soccer/server/pkg"
+	predis "github.com/markmandel/paddle-soccer/server/pkg/redis"
 )
 
 // Version is the current api version number
@@ -33,8 +33,8 @@ type Server struct {
 	sessionAddr string
 }
 
-// Handler is the extended http.HandleFunc to provide context for this application
-type Handler func(*Server, http.ResponseWriter, *http.Request) error
+// handler is the extended http.HandleFunc to provide context for this application
+type handler func(*Server, http.ResponseWriter, *http.Request) error
 
 // NewServer returns the HTTP Server instance
 func NewServer(hostAddr, redisAddr string, sessionAddr string) *Server {
@@ -46,9 +46,9 @@ func NewServer(hostAddr, redisAddr string, sessionAddr string) *Server {
 	log.Printf("[Info][Server] Connecting to Redis at %v", redisAddr)
 	log.Printf("[Info][Server] Connecting to Sessions at %v", sessionAddr)
 
-	s := &Server{pool: pkg.NewPool(redisAddr), sessionAddr: sessionAddr}
+	s := &Server{pool: predis.NewPool(redisAddr), sessionAddr: sessionAddr}
 
-	r := s.createRoutes()
+	r := s.newHandler()
 
 	s.srv = &http.Server{
 		Handler: r,
@@ -59,27 +59,34 @@ func NewServer(hostAddr, redisAddr string, sessionAddr string) *Server {
 }
 
 // Start starts the HTTP server on the given port
-func (s *Server) Start() {
-	err := pkg.WaitForConnection(s.pool)
+func (s *Server) Start() error {
+	err := predis.WaitForConnection(s.pool)
 	if err != nil {
-		log.Fatalf("[Error][Server] Could not connect to redis: %v", err)
+		log.Printf("[Error][Server] Could not connect to redis: %v", err)
+		return err
 	}
 
-	log.Fatalf("[Error][Server] Error starting server: %v", s.srv.ListenAndServe())
+	err = s.srv.ListenAndServe()
+	if err != nil {
+		log.Fatalf("[Error][Server] Error starting server: %v", err)
+		return err
+	}
+
+	return nil
 }
 
-// createRoutes creates the http routes for this application
-func (s *Server) createRoutes() http.Handler {
+// newHandler creates the http routes for this application
+func (s *Server) newHandler() http.Handler {
 	r := mux.NewRouter()
-	r.HandleFunc("/game", s.standardHandler(gameHandler)).Methods("POST")
-	r.HandleFunc("/game/{id}", s.standardHandler(getHandler)).Methods("GET")
+	r.HandleFunc("/game", s.wrapMiddleware(gameHandler)).Methods("POST")
+	r.HandleFunc("/game/{id}", s.wrapMiddleware(getHandler)).Methods("GET")
 
 	return r
 }
 
-// standardHandler returns a http.HandleFunc
+// wrapMiddleware returns a http.HandleFunc
 // wrapped in standard middleware
-func (s *Server) standardHandler(h Handler) http.HandlerFunc {
+func (s *Server) wrapMiddleware(h handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := h(s, w, r)
 		if err != nil {

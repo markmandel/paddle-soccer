@@ -46,5 +46,7 @@ func main() {
 	}
 	log.Print("[Info][Main] Creating server...")
 	s := sessions.NewServer(":"+port, os.Getenv(redisAddressEnv), os.Getenv(gameServerImageEnv))
-	s.Start()
+	if err := s.Start(); err != nil {
+		log.Fatalf("[Error][Main] %v", err)
+	}
 }

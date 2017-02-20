@@ -20,7 +20,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
-	"github.com/markmandel/paddle-soccer/server/pkg"
+	predis "github.com/markmandel/paddle-soccer/server/pkg/redis"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -36,8 +36,8 @@ type Server struct {
 	gameServerImage string
 }
 
-// Handler is the extended http.HandleFunc to provide context for this application
-type Handler func(*Server, http.ResponseWriter, *http.Request) error
+// handler is the extended http.HandleFunc to provide context for this application
+type handler func(*Server, http.ResponseWriter, *http.Request) error
 
 // NewServer returns the HTTP Server instance
 func NewServer(hostAddr, redisAddr string, image string) *Server {
@@ -48,9 +48,9 @@ func NewServer(hostAddr, redisAddr string, image string) *Server {
 	log.Printf("[Info][Server] Starting server version %v on port %v", Version, hostAddr)
 	log.Printf("[Info][Server] Connecting to Redis at %v", redisAddr)
 
-	s := &Server{gameServerImage: image, pool: pkg.NewPool(redisAddr)}
+	s := &Server{gameServerImage: image, pool: predis.NewPool(redisAddr)}
 
-	r := s.createRoutes()
+	r := s.newHandler()
 
 	s.srv = &http.Server{
 		Handler: r,
@@ -61,33 +61,41 @@ func NewServer(hostAddr, redisAddr string, image string) *Server {
 }
 
 // Start starts the HTTP server
-func (s *Server) Start() {
-	err := pkg.WaitForConnection(s.pool)
+func (s *Server) Start() error {
+	err := predis.WaitForConnection(s.pool)
 	if err != nil {
-		log.Fatalf("[Error][Server] Could not connect to redis: %v", err)
+		log.Printf("[Error][Server] Could not connect to redis: %v", err)
+		return err
 	}
 
 	s.cs, err = clientSet()
 	if err != nil {
-		log.Fatalf("[Error][Server] Could not connect to kubernetes api: %v", err)
+		log.Printf("[Error][Server] Could not connect to kubernetes api: %v", err)
+		return err
 	}
 
-	log.Fatalf("[Error][Server] Error starting server: %v", s.srv.ListenAndServe())
+	err = s.srv.ListenAndServe()
+	if err != nil {
+		log.Fatalf("[Error][Server] Error starting server: %v", err)
+		return err
+	}
+
+	return nil
 }
 
-// createRoutes returns the http routes for this application
-func (s *Server) createRoutes() http.Handler {
+// newHandler returns the http routes for this application
+func (s *Server) newHandler() http.Handler {
 	r := mux.NewRouter()
-	r.HandleFunc("/register", s.standardHandler(registerHandler)).Methods("POST")
-	r.HandleFunc("/session/{id}", s.standardHandler(getHandler)).Methods("GET")
-	r.HandleFunc("/session", s.standardHandler(createHandler)).Methods("POST")
+	r.HandleFunc("/register", s.wrapMiddleware(registerHandler)).Methods("POST")
+	r.HandleFunc("/session/{id}", s.wrapMiddleware(getHandler)).Methods("GET")
+	r.HandleFunc("/session", s.wrapMiddleware(createHandler)).Methods("POST")
 
 	return r
 }
 
-// standardHandler returns a http.HandleFunc
+// wrapMiddleware returns a http.HandleFunc
 // wrapped in standard middleware
-func (s *Server) standardHandler(h Handler) http.HandlerFunc {
+func (s *Server) wrapMiddleware(h handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := h(s, w, r)
 		if err != nil {

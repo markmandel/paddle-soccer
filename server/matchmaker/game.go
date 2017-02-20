@@ -55,10 +55,10 @@ type Game struct {
 
 // NewGame returns a game, with a unique id
 func NewGame() *Game {
-	g := Game{Status: gameStatusOpen}
-	g.ID = string(uuid.NewUUID())
-
-	return &g
+	return &Game{
+		Status: gameStatusOpen,
+		ID:     string(uuid.NewUUID()),
+	}
 }
 
 // Key returns the redis key for this Game
@@ -114,29 +114,25 @@ func pushOpenGame(con redis.Conn, g *Game) error {
 		return err
 	}
 
-	send := con.Send("RPUSH", redisOpenGameListKey, key)
-	err = send
+	err = con.Send("RPUSH", redisOpenGameListKey, key)
+	if err != nil {
+		log.Printf("[Error][games] Could not Send RPUSH: %v", err)
+		return err
+	}
 
-	err = con.Send("HMSET", key, "id", g.ID,
-		"statis", g.Status)
-
+	err = con.Send("HMSET", key, "id", g.ID, "status", g.Status)
 	if err != nil {
 		log.Printf("[Error][games] Could not Send HMSET: %v", err)
 		return err
 	}
+
 	err = con.Send("EXPIRE", key, 60*60)
 	if err != nil {
 		log.Printf("[Error][games] Could not Send EXPIRE: %v", err)
 		return err
 	}
 
-	if err != nil {
-		log.Printf("[Error][games] Could not RPUSH: %v", err)
-		return err
-	}
-
 	_, err = con.Do("EXEC")
-
 	if err != nil {
 		log.Printf("[Error][games] Could not save session to redis: %v", err)
 		return err

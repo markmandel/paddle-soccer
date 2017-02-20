@@ -32,14 +32,7 @@ func clientSet() (kubernetes.Interface, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	cs, err := kubernetes.NewForConfig(config)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return cs, nil
+	return kubernetes.NewForConfig(config)
 }
 
 // hostNameAndIP returns a map of Kubernetes node hostname (key) to external IP (value)
@@ -130,14 +123,12 @@ func (s *Server) createSessionPod() (string, error) {
 
 	log.Printf("[Info][Kubernetes] Creating pod: %#v", pod)
 	result, err := s.cs.CoreV1().Pods(namespace).Create(&pod)
-	var name string
 
 	if err != nil {
 		log.Printf("[Info][Kubernetes] Error creating pod: %v", err)
-	} else {
-		log.Printf("[Info][Kubernetes] Created pod: %v", result.Name)
-		name = result.Name
+		return "", err
 	}
 
-	return name, err
+	log.Printf("[Info][Kubernetes] Created pod: %v", result.Name)
+	return result.Name, nil
 }

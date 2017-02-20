@@ -30,9 +30,9 @@ type Session struct {
 
 const redisSessionPrefix = "Session:"
 
-// ErrorSessionNotFound is returned when the Session can't be
+// ErrSessionNotFound is returned when the Session can't be
 // found in redis
-var ErrorSessionNotFound = errors.New("Could not find the requested session")
+var ErrSessionNotFound = errors.New("Could not find the requested session")
 
 // storeSession store the session in redis
 func (s *Server) storeSession(sess Session) error {
@@ -87,7 +87,7 @@ func (s *Server) getSession(id string) (Session, error) {
 
 	if len(values) == 0 {
 		log.Printf("[Error][session] Could not find record for key: %v", key)
-		return result, ErrorSessionNotFound
+		return result, ErrSessionNotFound
 	}
 
 	err = redis.ScanStruct(values, &result)
