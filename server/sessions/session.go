@@ -15,10 +15,10 @@
 package sessions
 
 import (
-	"errors"
 	"log"
 
 	"github.com/garyburd/redigo/redis"
+	"github.com/pkg/errors"
 )
 
 // Session represents a game session
@@ -44,28 +44,23 @@ func (s *Server) storeSession(sess Session) error {
 
 	err := con.Send("MULTI")
 	if err != nil {
-		log.Printf("[Error][session] Could not Send MULTI: %v", err)
+		return errors.Wrap(err, "Could not Send MULTI")
 	}
+
 	err = con.Send("HMSET", key, "id", sess.ID,
 		"port", sess.Port,
 		"ip", sess.IP)
-
 	if err != nil {
-		log.Printf("[Error][session] Could not Send HMSET: %v", err)
-		return err
+		return errors.Wrap(err, "Could not Send HMSET")
 	}
+
 	err = con.Send("EXPIRE", key, 60*60)
 	if err != nil {
-		log.Printf("[Error][session] Could not Send EXPIRE: %v", err)
-		return err
+		return errors.Wrap(err, "Could not Send EXPIRE")
 	}
+
 	_, err = con.Do("EXEC")
-
-	if err != nil {
-		log.Printf("[Error][session] Could not save session to redis: %v", err)
-	}
-
-	return err
+	return errors.Wrap(err, "Could not save session to redis")
 }
 
 // getSession returns a Session from redis
@@ -79,22 +74,15 @@ func (s *Server) getSession(id string) (Session, error) {
 
 	var result Session
 	values, err := redis.Values(con.Do("HGETALL", key))
-
 	if err != nil {
-		log.Printf("[Error][session] Error getting hash for key %v. %v", key, err)
-		return result, err
+		return result, errors.Wrapf(err, "Error getting hash for key %v", key)
 	}
 
 	if len(values) == 0 {
-		log.Printf("[Error][session] Could not find record for key: %v", key)
+		log.Printf("[Warn][session] Could not find record for key: %v", key)
 		return result, ErrSessionNotFound
 	}
 
 	err = redis.ScanStruct(values, &result)
-
-	if err != nil {
-		log.Printf("[Error][session] Error Scanning Struct %v", err)
-	}
-
-	return result, err
+	return result, errors.Wrap(err, "Error Scanning Struct")
 }

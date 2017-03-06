@@ -21,6 +21,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
 	predis "github.com/markmandel/paddle-soccer/server/pkg/redis"
+	"github.com/pkg/errors"
 )
 
 // Version is the current api version number
@@ -62,17 +63,9 @@ func NewServer(hostAddr, redisAddr string, sessionAddr string) *Server {
 func (s *Server) Start() error {
 	err := predis.WaitForConnection(s.pool)
 	if err != nil {
-		log.Printf("[Error][Server] Could not connect to redis: %v", err)
-		return err
+		return errors.Wrap(err, "Could not connect to redis on start")
 	}
-
-	err = s.srv.ListenAndServe()
-	if err != nil {
-		log.Fatalf("[Error][Server] Error starting server: %v", err)
-		return err
-	}
-
-	return nil
+	return errors.Wrap(s.srv.ListenAndServe(), "Error starting server")
 }
 
 // newHandler creates the http routes for this application
@@ -90,6 +83,7 @@ func (s *Server) wrapMiddleware(h handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		err := h(s, w, r)
 		if err != nil {
+			log.Printf("[Error][Server] %+v", err)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	}

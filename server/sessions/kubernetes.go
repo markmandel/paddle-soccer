@@ -15,10 +15,9 @@
 package sessions
 
 import (
-	"fmt"
-
 	"log"
 
+	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/unversioned"
 	"k8s.io/client-go/pkg/api/v1"
@@ -30,8 +29,9 @@ func clientSet() (kubernetes.Interface, error) {
 	log.Print("[Info][Kubernetes] Connecting to Kubernetes API...")
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Could not connect to Kubernetes API")
 	}
+	log.Print("[Info][Kubernetes] Connected to Kubernetes API")
 	return kubernetes.NewForConfig(config)
 }
 
@@ -41,8 +41,7 @@ func (s *Server) hostNameAndIP() (map[string]string, error) {
 	list, err := s.cs.CoreV1().Nodes().List(v1.ListOptions{})
 
 	if err != nil {
-		log.Printf("[Error][kubernetes] Error Listing nodes: %v", err)
-		return result, err
+		return result, errors.Wrap(err, "Error Listing nodes")
 	}
 
 	for _, i := range list.Items {
@@ -56,7 +55,7 @@ func (s *Server) hostNameAndIP() (map[string]string, error) {
 		}
 
 		if addr == "" {
-			return result, fmt.Errorf("[Error][Kubernetes] Could not find an external ip for Node: #%v", i)
+			return result, errors.Errorf("Could not find an external ip for Node: #%v", i)
 		}
 
 		result[k] = addr
@@ -73,10 +72,8 @@ func (s *Server) externalNodeIPofPod(sess Session, m map[string]string) (string,
 
 	pod, err := s.cs.CoreV1().Pods("default").Get(sess.ID)
 	if err != nil {
-		log.Printf("[Error][Kubernetes] Error getting pod information for pod %v: %v", sess.ID, err)
-		return "", err
+		return "", errors.Wrapf(err, "Error getting pod information for pod %v", sess.ID)
 	}
-
 	nodeName := pod.Spec.NodeName
 	return m[nodeName], nil
 }
@@ -123,12 +120,9 @@ func (s *Server) createSessionPod() (string, error) {
 
 	log.Printf("[Info][Kubernetes] Creating pod: %#v", pod)
 	result, err := s.cs.CoreV1().Pods(namespace).Create(&pod)
-
 	if err != nil {
-		log.Printf("[Info][Kubernetes] Error creating pod: %v", err)
-		return "", err
+		return "", errors.Wrap(err, "Error creating pod")
 	}
-
 	log.Printf("[Info][Kubernetes] Created pod: %v", result.Name)
 	return result.Name, nil
 }

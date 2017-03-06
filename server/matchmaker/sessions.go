@@ -16,7 +16,6 @@ package matchmaker
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -24,6 +23,7 @@ import (
 	"time"
 
 	"github.com/garyburd/redigo/redis"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -48,16 +48,14 @@ func (s *Server) createSessionForGame(con redis.Conn, g *Game) (*Game, error) {
 	r, err := http.Post(path, "application/json", nil)
 
 	if err != nil {
-		log.Printf("[Error][sessions] Error calling /session: %v", err)
-		return g, err
+		return g, errors.Wrap(err, "Error calling /session")
 	}
 	defer r.Body.Close()
 
 	sess := Session{}
 	err = json.NewDecoder(r.Body).Decode(&sess)
 	if err != nil {
-		log.Printf("[Error][sessions] Error: %v", err)
-		return g, err
+		return g, errors.WithStack(err)
 	}
 
 	log.Printf("[Info][sessions] Created Session: %#v", sess)
@@ -81,8 +79,7 @@ func (s *Server) getSessionIPAndPort(sess Session) (Session, error) {
 		log.Printf("[Info][sessions] Requesting Session Data: %v", req)
 		res, err := http.Get(req)
 		if err != nil {
-			log.Printf("[Error][sessions] Error getting session info: %v", err)
-			return sess, err
+			return sess, errors.Wrap(err, "Error getting session info")
 		}
 		if res.StatusCode == http.StatusOK {
 			log.Printf("[Info][sessions] Recieved session data, status: %v", res.StatusCode)
@@ -100,16 +97,8 @@ func (s *Server) getSessionIPAndPort(sess Session) (Session, error) {
 	defer body.Close()
 
 	if body == nil {
-		err := fmt.Errorf("Could not get session %v data", sess.ID)
-		log.Printf("[Error][sessions] %v", err)
-		return sess, err
+		return sess, errors.Errorf("Could not get session %v data", sess.ID)
 	}
 
-	err := json.NewDecoder(body).Decode(&sess)
-
-	if err != nil {
-		log.Printf("[Error][sessions] Could not decode json to Session, %v", err)
-	}
-
-	return sess, err
+	return sess, errors.Wrap(json.NewDecoder(body).Decode(&sess), "Could not decode json to Session")
 }

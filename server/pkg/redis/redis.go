@@ -20,6 +20,7 @@ import (
 
 	"github.com/cenkalti/backoff"
 	"github.com/garyburd/redigo/redis"
+	"github.com/pkg/errors"
 )
 
 // WaitForConnection pings redis with an exponential backoff,
@@ -32,12 +33,12 @@ func WaitForConnection(pool *redis.Pool) error {
 
 		_, err := con.Do("PING")
 		if err != nil {
-			log.Printf("[Warn][Redis] Could not connect to Redis. %v", err)
+			log.Printf("[Warn][Redis] Retrying connection to redis. %v", err)
 		} else {
 			log.Print("[Info][Redis] Connected.")
 		}
 
-		return err
+		return errors.Wrap(err, "Could not connect to Redis")
 	}, backoff.NewExponentialBackOff())
 }
 
@@ -51,7 +52,7 @@ func NewPool(address string) *redis.Pool {
 		},
 		TestOnBorrow: func(c redis.Conn, t time.Time) error {
 			_, err := c.Do("PING")
-			return err
+			return errors.Wrap(err, "Error with PING on TestOnBorrow")
 		},
 	}
 }

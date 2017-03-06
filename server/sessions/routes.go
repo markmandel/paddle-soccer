@@ -22,6 +22,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 )
 
 // createHandler is a handler for creating a game server session pod
@@ -46,8 +47,7 @@ func registerHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("[Error][Register] Reading Body: %v.", err)
-		return err
+		return errors.Wrap(err, "Could not read body")
 	}
 
 	log.Printf("[Info][Register] Recieved JSON Playload: %v", string(b))
@@ -55,16 +55,10 @@ func registerHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	err = json.Unmarshal(b, &sess)
 
 	if err != nil {
-		log.Printf("[Error][Register] Error decoding json: %v. [%v]", err, string(b))
-		return err
+		return errors.Wrapf(err, "Error decoding json: '%v'", string(b))
 	}
 
 	log.Printf("[Info][Register] Recieved Session Registration: %#v", sess)
-
-	if err != nil {
-		log.Printf("[Error][Register] Error connecting to Kubernetes: %v", err)
-		return err
-	}
 
 	list, err := s.hostNameAndIP()
 	if err != nil {
@@ -90,7 +84,7 @@ func getHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 
 	if !ok {
 		msg := "No session id provided"
-		log.Printf("[Error][get] %v", msg)
+		log.Printf("[Warn][get] %v", msg)
 		http.Error(w, msg, http.StatusNotFound)
 		return nil
 	}
@@ -103,7 +97,6 @@ func getHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 		http.Error(w, fmt.Sprintf("Could not find session for id: %v", id), http.StatusNotFound)
 		return nil
 	} else if err != nil {
-		log.Printf("[Error][get] Error getting session: %v", err)
 		return err
 	}
 

@@ -23,6 +23,7 @@
 #     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___|___/
 #
 
+DEV_IMAGE=markmandel/paddle-soccer-dev
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_path := $(dir $(mkfile_path))
 
@@ -38,6 +39,13 @@ test:
 	cd sessions && $(MAKE) test
 	cd pkg && $(MAKE) test
 	cd matchmaker && $(MAKE) test
+
+# run all the tests in the CI docker container
+docker-test:
+	docker run --rm \
+	-v $(current_path):/go/src/github.com/markmandel/paddle-soccer/server \
+	-w="/go/src/github.com/markmandel/paddle-soccer/server" \
+	$(DEV_IMAGE) /bin/bash -c "/redis/src/redis-server /redis/redis.conf && make test"
 
 # run the visualiser
 visualise:
@@ -63,7 +71,7 @@ clean-k8s:
 	kubectl delete daemonsets --all
 
 # easy way to pull in all the dependencies the project uses
-# handy if godep does something odd.
+# handy because godep looks in the $GOPATH.
 deps:
 	-git clone -b release-2.0 --depth=5 https://github.com/kubernetes/client-go.git $(GOPATH)/src/k8s.io/client-go
 	cd $(GOPATH)/src/k8s.io/client-go && godep restore && rm -rf vendor && git add -A && git commit -a -m "Commit"
@@ -71,4 +79,4 @@ deps:
 	go get github.com/gorilla/mux
 	go get github.com/garyburd/redigo/redis
 	go get github.com/cenkalti/backoff
-
+	go get github.com/pkg/errors

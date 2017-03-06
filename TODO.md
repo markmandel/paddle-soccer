@@ -1,6 +1,8 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Test and see if it works on Minikube
+- Update Unity version
+- readiness check based on redis PING
+- http health check
 - Autoscaling
 - Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.
@@ -9,8 +11,4 @@
 - Make it so a player can't go into the goal area
 - Put a red and blue highlight on each goal, so you can tell which is which
 - Animate paddle on kick
-- readiness check based on redis PING
-- http health check
 - Specific Nodepools for game servers vs. everyone else.
-- Update error handling to https://github.com/pkg/errors
-- Update logging to https://github.com/sirupsen/logrus

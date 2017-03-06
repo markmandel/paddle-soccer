@@ -20,6 +20,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/pkg/errors"
 )
 
 // gameHandler is the handler to post to, such that game match-making can occur
@@ -58,14 +59,7 @@ func gameHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 			return err
 		}
 	}
-
-	err = json.NewEncoder(w).Encode(g)
-	if err != nil {
-		log.Printf("[Error][game_route] encoding JSON: %v", err)
-		return err
-	}
-
-	return nil
+	return errors.Wrap(json.NewEncoder(w).Encode(g), "Error encoding to json")
 }
 
 // getHandler is a handler tp get the details of a game
@@ -78,17 +72,9 @@ func getHandler(s *Server, w http.ResponseWriter, r *http.Request) error {
 	id := vars["id"]
 
 	log.Printf("[Info][get_route] Retriving game: %v", id)
-
 	g, err := getGame(con, redisGamePrefix+id)
-
 	if err != nil {
 		return err
 	}
-
-	err = json.NewEncoder(w).Encode(g)
-	if err != nil {
-		log.Printf("[Error][get_route] Error encoding game to json: %v", err)
-	}
-
-	return err
+	return errors.Wrap(json.NewEncoder(w).Encode(g), "Error encoding game to json")
 }
