@@ -25,7 +25,7 @@
 #
 
 PROJECT=$(shell gcloud config list project | awk 'FNR ==2 { print $$3 }')
-TAG=paddle-soccer/dev
+TAG=markmandel/paddle-soccer-dev
 REGISTRY_TAG=gcr.io/$(PROJECT)/$(TAG)
 NAME=paddle-soccer-shell
 DOCKER_GID=$(word 3,$(subst :, ,$(shell getent group docker)))
