@@ -82,6 +82,7 @@ func (s *Server) newHandler() http.Handler {
 	r.HandleFunc("/register", s.wrapMiddleware(registerHandler)).Methods("POST")
 	r.HandleFunc("/session/{id}", s.wrapMiddleware(getHandler)).Methods("GET")
 	r.HandleFunc("/session", s.wrapMiddleware(createHandler)).Methods("POST")
+	r.HandleFunc("/readiness", predis.NewReadinessCheck(s.pool))
 
 	return r
 }

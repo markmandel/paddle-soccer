@@ -73,6 +73,7 @@ func (s *Server) newHandler() http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/game", s.wrapMiddleware(gameHandler)).Methods("POST")
 	r.HandleFunc("/game/{id}", s.wrapMiddleware(getHandler)).Methods("GET")
+	r.HandleFunc("/readiness", predis.NewReadinessCheck(s.pool))
 
 	return r
 }

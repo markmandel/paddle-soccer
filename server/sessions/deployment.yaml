@@ -16,6 +16,13 @@ spec:
       - name: sessions
         image: gcr.io/${PROJECT}/sessions
         imagePullPolicy: Always
+        readinessProbe:
+            httpGet:
+                path: /readiness
+                port: 8080
+                scheme: HTTP
+            periodSeconds: 5
+            timeoutSeconds: 3
         env:
           - name: REDIS_SERVICE # TODO: Use a configmap instead
             value: sessions-redis:6379

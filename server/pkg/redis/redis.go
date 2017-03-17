@@ -18,6 +18,8 @@ import (
 	"log"
 	"time"
 
+	"net/http"
+
 	"github.com/cenkalti/backoff"
 	"github.com/garyburd/redigo/redis"
 	"github.com/pkg/errors"
@@ -54,5 +56,20 @@ func NewPool(address string) *redis.Pool {
 			_, err := c.Do("PING")
 			return errors.Wrap(err, "Error with PING on TestOnBorrow")
 		},
+	}
+}
+
+// NewReadinessCheck creates a http rediness check
+// that tests that a connection to Redis can be made
+func NewReadinessCheck(pool *redis.Pool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		con := pool.Get()
+		defer con.Close()
+
+		_, err := con.Do("PING")
+		if err != nil {
+			log.Printf("[Warn][Redis] Readiness check failed. %v", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 	}
 }

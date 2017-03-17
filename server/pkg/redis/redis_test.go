@@ -17,12 +17,33 @@ package redis
 import (
 	"testing"
 
+	"net/http"
+	"net/http/httptest"
+
 	"github.com/stretchr/testify/assert"
 )
 
 func TestConnectRedis(t *testing.T) {
+	t.Parallel()
 	p := NewPool(":6379")
 
 	err := WaitForConnection(p)
 	assert.Nil(t, err, "Could not ping redis: %v", err)
+}
+
+func TestNewReadinessCheck(t *testing.T) {
+	t.Parallel()
+	r := &http.Request{}
+	w := httptest.NewRecorder()
+
+	rc := NewReadinessCheck(NewPool(":6379"))
+	rc(w, r)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	// not a valid port
+	w = httptest.NewRecorder()
+	rc = NewReadinessCheck(NewPool(":4444"))
+	rc(w, r)
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }

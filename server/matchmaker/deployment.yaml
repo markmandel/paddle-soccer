@@ -16,6 +16,13 @@ spec:
       - name: matchmaker
         image: gcr.io/${PROJECT}/matchmaker
         imagePullPolicy: Always
+        readinessProbe:
+            httpGet:
+                path: /readiness
+                port: 8080
+                scheme: HTTP
+            periodSeconds: 5
+            timeoutSeconds: 3
         env:
           - name: REDIS_SERVICE
             value: matchmaker-redis:6379
