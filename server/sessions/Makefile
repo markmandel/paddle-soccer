@@ -55,11 +55,10 @@ deploy-service:
 deploy-redis:
 	kubectl create -f redis.yaml
 
-clean-k8s:
-	-kubectl delete deployment sessions
-	-kubectl delete statefulset sessions-redis
-	-kubectl delete service sessions
-	-kubectl delete service sessions-redis
+# Add the cmd/server to the test suite
+test: test-main
+test-main:
+	go test $(PACKAGE)/cmd/server
 
 # delete the pods, so they come down again
 re-deploy:

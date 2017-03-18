@@ -35,13 +35,15 @@ type Server struct {
 	cs   kubernetes.Interface
 	// the game server image
 	gameServerImage string
+	//node pool selector for each game pod
+	gameNodeSelector map[string]string
 }
 
 // handler is the extended http.HandleFunc to provide context for this application
 type handler func(*Server, http.ResponseWriter, *http.Request) error
 
 // NewServer returns the HTTP Server instance
-func NewServer(hostAddr, redisAddr string, image string) *Server {
+func NewServer(hostAddr, redisAddr string, image string, gameNodeSelector map[string]string) *Server {
 	if redisAddr == "" {
 		redisAddr = ":6379"
 	}
@@ -49,7 +51,7 @@ func NewServer(hostAddr, redisAddr string, image string) *Server {
 	log.Printf("[Info][Server] Starting server version %v on port %v", Version, hostAddr)
 	log.Printf("[Info][Server] Connecting to Redis at %v", redisAddr)
 
-	s := &Server{gameServerImage: image, pool: predis.NewPool(redisAddr)}
+	s := &Server{gameServerImage: image, pool: predis.NewPool(redisAddr), gameNodeSelector: gameNodeSelector}
 
 	r := s.newHandler()
 

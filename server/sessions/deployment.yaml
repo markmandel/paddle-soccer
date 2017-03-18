@@ -8,10 +8,9 @@ spec:
     metadata:
       labels:
         role: sessions-server
-        visualize: "true"
-        uses: sessions-redis
-        name: sessions
     spec:
+      nodeSelector:
+        role: apps
       containers:
       - name: sessions
         image: gcr.io/${PROJECT}/sessions
@@ -28,5 +27,7 @@ spec:
             value: sessions-redis:6379
           - name: GAME_SERVER_IMAGE
             value: gcr.io/${PROJECT}/soccer-server:0.1
+          - name: GAME_NODE_SELECTOR
+            value: "role:game-server"
         ports:
         - containerPort: 8080

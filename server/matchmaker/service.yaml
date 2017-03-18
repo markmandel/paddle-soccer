@@ -3,9 +3,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: matchmaker
-  labels:
-    name: matchmaker
-    visualize: "true"
 spec:
   ports:
   - port: 80

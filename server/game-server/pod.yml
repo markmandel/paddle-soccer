@@ -1,3 +1,9 @@
+#
+# This is here purely for demonstrative
+# purposes. In reality, we use the K8s API
+# In the `sessions` package.
+#
+
 apiVersion: v1
 kind: Pod
 metadata:
@@ -5,6 +11,8 @@ metadata:
 spec:
   hostNetwork: true
   restartPolicy: Never
+  nodeSelector:
+    role: game-server
   containers:
     - name: soccer-server
       image: gcr.io/unity-1355/soccer-server:0.1

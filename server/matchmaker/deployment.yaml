@@ -8,10 +8,9 @@ spec:
     metadata:
       labels:
         role: matchmaker-server
-        visualize: "true"
-        name: matchmaker
-        uses: matchmaker-redis
     spec:
+      nodeSelector:
+        role: apps
       containers:
       - name: matchmaker
         image: gcr.io/${PROJECT}/matchmaker

@@ -54,8 +54,8 @@ pull:
 
 #clean up the shell
 clean:
-	docker rmi $(TAG)
-	docker rmi $(REGISTRY_TAG)
+	-docker rmi $(TAG)
+	-docker rmi $(REGISTRY_TAG)
 
 # Start a dev shell
 shell:

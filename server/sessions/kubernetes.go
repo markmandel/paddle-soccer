@@ -88,16 +88,14 @@ func (s *Server) createSessionPod() (string, error) {
 		ObjectMeta: v1.ObjectMeta{
 			GenerateName: "sessions-game-",
 			Labels: map[string]string{
-				"sessions":  "game",
-				"name":      "sessions-game",
-				"visualize": "true", // these are needed for the presentation demo.
-				"uses":      "sessions",
+				"sessions": "game",
 			},
 			Namespace: namespace,
 		},
 		Spec: v1.PodSpec{
 			HostNetwork:   true,
 			RestartPolicy: v1.RestartPolicyNever,
+			NodeSelector:  s.gameNodeSelector,
 			Containers: []v1.Container{
 				{
 					Name:            "sessions-game",
