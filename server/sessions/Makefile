@@ -69,3 +69,6 @@ test-register:
 
 test-create:
 	curl -v -H "Content-Type: application/json" -X POST http://$(SERVER)/session
+
+clean-game-servers:
+	kubectl get pod --selector sessions=game | tail -n -1 | awk '{print $$1}' | xargs kubectl delete pod

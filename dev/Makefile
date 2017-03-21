@@ -77,8 +77,8 @@ shell:
 		-v ~/.appcfg_oauth2_tokens:/home/$(USER)/.appcfg_oauth2_tokens \
 		-v $(project_path)/.kube:/home/$(USER)/.kube \
 		-v $(project_path)/dev/zshrc:/home/$(USER)/.zshrc \
-		-v $(project_path):/home/$(USER)/project \
-		-w /home/$(USER)/project \
+		-v $(project_path):/go/src/github.com/markmandel/paddle-soccer \
+		-w /go/src/github.com/markmandel/paddle-soccer \
 		-it $(TAG) /root/startup.sh
 
 # attach to a running dev shell
@@ -94,6 +94,11 @@ mount:
 clean-mounts:
 	sed -i 's/^\[0.0.0.0\].*$$//g' ~/.ssh/known_hosts
 
+# open chrome to the forwarded port
+chrome:
+	google-chrome http://localhost:$(call getPort,$(PORT))
+
+
 #   _____                 _   _
 #  |  ___|   _ _ __   ___| |_(_) ___  _ __  ___
 #  | |_ | | | | '_ \ / __| __| |/ _ \| '_ \/ __|
@@ -103,3 +108,4 @@ clean-mounts:
 
 # get the mapped docker host port
 getPort = $(word 2,$(subst :, ,$(shell docker port $(NAME) $(1))))
+

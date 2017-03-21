@@ -29,5 +29,7 @@ spec:
             value: gcr.io/${PROJECT}/soccer-server:0.1
           - name: GAME_NODE_SELECTOR
             value: "role:game-server"
+          - name: CPU_LIMIT
+            value: "0.5"
         ports:
         - containerPort: 8080

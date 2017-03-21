@@ -28,6 +28,7 @@ const (
 	// portEnv is the environment variable to
 	// use to find the port to listen on
 	portEnv = "PORT"
+
 	// redisAddressEnv is the environment variable to find the
 	// address to listen to redis on
 	redisAddressEnv = "REDIS_SERVICE"
@@ -42,6 +43,12 @@ const (
 	// Each entry is separated by , and each key, value
 	// is seperate by :
 	gameNodeSelectorEnv = "GAME_NODE_SELECTOR"
+
+	// cpuLimitEnv is the environment variable to specify
+	// the cpu limits for each game server - see
+	// https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#meaning-of-cpu
+	// for more details
+	cpuLimitEnv = "CPU_LIMIT"
 )
 
 // main starts the sessions server
@@ -53,8 +60,14 @@ func main() {
 		port = "8080"
 	}
 	log.Print("[Info][Main] Creating server...")
-	s := sessions.NewServer(":"+port, os.Getenv(redisAddressEnv),
-		os.Getenv(gameServerImageEnv), deserialiseEnvMap(os.Getenv(gameNodeSelectorEnv)))
+	s, err := sessions.NewServer(":"+port, os.Getenv(redisAddressEnv),
+		os.Getenv(gameServerImageEnv), deserialiseEnvMap(os.Getenv(gameNodeSelectorEnv)),
+		os.Getenv(cpuLimitEnv))
+
+	if err != nil {
+		log.Fatalf("[Error][Main] %+v", err)
+	}
+
 	if err := s.Start(); err != nil {
 		log.Fatalf("[Error][Main] %+v", err)
 	}

@@ -23,14 +23,15 @@ import (
 )
 
 func TestServerStoreSession(t *testing.T) {
-	s := NewServer("", "", "", nil)
+	s, err := NewServer("", "", "", nil, "0.5")
+	assert.Nil(t, err)
 	con := s.pool.Get()
 	defer con.Close()
 
 	id := uuid.New()
 	sess := Session{ID: id, Port: 8080, IP: "0.0.0.0"}
 
-	err := s.storeSession(sess)
+	err = s.storeSession(sess)
 	assert.Nil(t, err)
 
 	key := redisSessionPrefix + sess.ID
@@ -45,14 +46,15 @@ func TestServerStoreSession(t *testing.T) {
 }
 
 func TestServerGetSession(t *testing.T) {
-	s := NewServer("", "", "", nil)
+	s, err := NewServer("", "", "", nil, "0.5")
+	assert.Nil(t, err)
 	con := s.pool.Get()
 	defer con.Close()
 
 	id := uuid.New()
 	sess := Session{ID: id, Port: 8080, IP: "0.0.0.0"}
 
-	err := s.storeSession(sess)
+	err = s.storeSession(sess)
 	assert.Nil(t, err)
 
 	reget, err := s.getSession(id)

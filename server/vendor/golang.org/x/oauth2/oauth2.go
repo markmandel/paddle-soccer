@@ -5,7 +5,7 @@
 // Package oauth2 provides support for making
 // OAuth2 authorized and authenticated HTTP requests.
 // It can additionally grant authorization with Bearer JWT.
-package oauth2
+package oauth2 // import "golang.org/x/oauth2"
 
 import (
 	"bytes"
@@ -180,7 +180,6 @@ func (c *Config) Exchange(ctx context.Context, code string) (*Token, error) {
 		"grant_type":   {"authorization_code"},
 		"code":         {code},
 		"redirect_uri": internal.CondVal(c.RedirectURL),
-		"scope":        internal.CondVal(strings.Join(c.Scopes, " ")),
 	})
 }
 

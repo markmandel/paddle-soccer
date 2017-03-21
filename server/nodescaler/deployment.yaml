@@ -1,0 +1,33 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nodescaler
+spec:
+  replicas: 1 # only want one - because it's on it's own loop to scale up and down nodes
+  template:
+    metadata:
+      labels:
+        role: nodescaler-server
+    spec:
+      nodeSelector:
+        role: apps
+      containers:
+      - name: matchmaker
+        image: gcr.io/${PROJECT}/nodescaler
+        imagePullPolicy: Always
+        livenessProbe:
+            httpGet:
+                path: /healthz
+                port: 8080
+                scheme: HTTP
+            periodSeconds: 5
+            timeoutSeconds: 3
+        env:
+          - name: NODE_SELECTOR
+            value: "role=game-server"
+          - name: CPU_REQUEST
+            value: "0.5"
+          - name: BUFFER_COUNT
+            value: "5"
+        ports:
+        - containerPort: 8080

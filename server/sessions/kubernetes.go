@@ -18,22 +18,9 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/unversioned"
 	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/rest"
 )
-
-// clientSet returns the production Kubernetes clientSet
-func clientSet() (kubernetes.Interface, error) {
-	log.Print("[Info][Kubernetes] Connecting to Kubernetes API...")
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not connect to Kubernetes API")
-	}
-	log.Print("[Info][Kubernetes] Connected to Kubernetes API")
-	return kubernetes.NewForConfig(config)
-}
 
 // hostNameAndIP returns a map of Kubernetes node hostname (key) to external IP (value)
 func (s *Server) hostNameAndIP() (map[string]string, error) {
@@ -101,6 +88,7 @@ func (s *Server) createSessionPod() (string, error) {
 					Name:            "sessions-game",
 					Image:           s.gameServerImage,
 					ImagePullPolicy: v1.PullAlways, // TODO: make this an env var / this is just for dev
+					Resources:       v1.ResourceRequirements{Limits: v1.ResourceList{v1.ResourceCPU: s.cpuLimit}},
 					Env: []v1.EnvVar{
 						{
 							Name: "SESSION_NAME",

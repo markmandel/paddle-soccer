@@ -20,13 +20,15 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/gorilla/mux"
+	"github.com/markmandel/paddle-soccer/server/pkg/kube"
 	predis "github.com/markmandel/paddle-soccer/server/pkg/redis"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api/resource"
 )
 
 // Version is the current api version number
-const Version string = "sessions:0.3"
+const Version string = "sessions:0.4"
 
 // Server is the http server instance
 type Server struct {
@@ -37,13 +39,15 @@ type Server struct {
 	gameServerImage string
 	//node pool selector for each game pod
 	gameNodeSelector map[string]string
+	//cpu resource limit for each game
+	cpuLimit resource.Quantity
 }
 
 // handler is the extended http.HandleFunc to provide context for this application
 type handler func(*Server, http.ResponseWriter, *http.Request) error
 
 // NewServer returns the HTTP Server instance
-func NewServer(hostAddr, redisAddr string, image string, gameNodeSelector map[string]string) *Server {
+func NewServer(hostAddr, redisAddr string, image string, gameNodeSelector map[string]string, cpuLimit string) (*Server, error) {
 	if redisAddr == "" {
 		redisAddr = ":6379"
 	}
@@ -53,6 +57,12 @@ func NewServer(hostAddr, redisAddr string, image string, gameNodeSelector map[st
 
 	s := &Server{gameServerImage: image, pool: predis.NewPool(redisAddr), gameNodeSelector: gameNodeSelector}
 
+	var err error
+	s.cpuLimit, err = resource.ParseQuantity(cpuLimit)
+	if err != nil {
+		return s, errors.Wrapf(err, "CPU Limit '%v' is invalid", cpuLimit)
+	}
+
 	r := s.newHandler()
 
 	s.srv = &http.Server{
@@ -60,7 +70,7 @@ func NewServer(hostAddr, redisAddr string, image string, gameNodeSelector map[st
 		Addr:    hostAddr,
 	}
 
-	return s
+	return s, nil
 }
 
 // Start starts the HTTP server
@@ -70,7 +80,7 @@ func (s *Server) Start() error {
 		return errors.Wrap(err, "Could not connect to redis")
 	}
 
-	s.cs, err = clientSet()
+	s.cs, err = kube.ClientSet()
 	if err != nil {
 		return errors.Wrap(err, "Could not connect to kubernetes api")
 	}

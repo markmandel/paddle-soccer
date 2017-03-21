@@ -26,7 +26,7 @@
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 current_path := $(dir $(mkfile_path))
 local_gopath := $(current_path)/go
-project_path := $(local_gopath)/src/github.com/markmandel/paddle-soccer/server
+project_path := $(local_gopath)/src/github.com/markmandel/paddle-soccer/
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -46,6 +46,3 @@ create-local-gopath:
 clean-local-gopath:
 	rm -rf $(local_gopath)
 
-# Fire up a godoc server
-godoc:
-	godoc -http=":8080" &

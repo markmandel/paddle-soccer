@@ -55,12 +55,6 @@ deploy-service:
 deploy-redis:
 	kubectl create -f redis.yaml
 
-clean-k8s:
-	-kubectl delete deployment matchmaker
-	-kubectl delete statefulset matchmaker-redis
-	-kubectl delete service matchmaker
-	-kubectl delete service matchmaker-redis
-
 # delete the pods, so they come down again
 re-deploy:
 	kubectl get pods --selector=role=matchmaker-server | grep matchmaker | awk '{ print $$1 }' | xargs kubectl delete pod

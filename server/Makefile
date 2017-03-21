@@ -72,11 +72,16 @@ clean-k8s:
 
 # easy way to pull in all the dependencies the project uses
 # handy because godep looks in the $GOPATH.
+# Uses https://github.com/golang/dep for dependency management
+# You may want to also use `govend --prune` for pruning
 deps:
-	-git clone -b release-2.0 --depth=5 https://github.com/kubernetes/client-go.git $(GOPATH)/src/k8s.io/client-go
-	cd $(GOPATH)/src/k8s.io/client-go && godep restore && rm -rf vendor && git add -A && git commit -a -m "Commit"
-	go get github.com/stretchr/testify/assert
-	go get github.com/gorilla/mux
-	go get github.com/garyburd/redigo/redis
-	go get github.com/cenkalti/backoff
-	go get github.com/pkg/errors
+	dep ensure k8s.io/client-go@release-2.0
+	dep ensure github.com/gorilla/mux
+	dep ensure github.com/garyburd/redigo #/redis
+	dep ensure github.com/cenkalti/backoff
+	dep ensure github.com/pkg/errors
+	dep ensure github.com/stretchr/testify #/assert
+
+# Fire up a godoc server
+godoc:
+	godoc -http=":8080" &
