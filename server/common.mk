@@ -45,7 +45,7 @@ run:
 	docker run --rm -p 8080:8080 $(TAG)
 
 # clean all the things
-clean: clean-server
+clean:
 	docker rmi $(TAG)
 
 # push to gcr.io

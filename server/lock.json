@@ -1,5 +1,5 @@
 {
-    "memo": "a3b26f4cc3b136b4a7881c446da76039aac541ef5a5190c74c9a509e6797bff9",
+    "memo": "8d9bd0851d392b4305916a1086e5227bab316e8ab82cf5d0418c577daed1b5fc",
     "projects": [
         {
             "name": "cloud.google.com/go",
@@ -310,6 +310,17 @@
                 "unicode/cldr",
                 "unicode/norm",
                 "width"
+            ]
+        },
+        {
+            "name": "google.golang.org/api",
+            "branch": "master",
+            "revision": "48e49d1645e228d1c50c3d54fb476b2224477303",
+            "packages": [
+                "compute/v1",
+                "gensupport",
+                "googleapi",
+                "googleapi/internal/uritemplates"
             ]
         },
         {

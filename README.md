@@ -34,7 +34,14 @@ All the non-Unity server side code is found in the `server` folder.
 
 This project works on Kubernetes [1.5.2](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG.md#v152) or higher, as it uses Kubernetes [StatefulSets](https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/).
 
-If you have a [Google Cloud Platform](https://cloud.google.com/) Project configured and the [Google Cloud SDK](https://cloud.google.com/sdk/) installed, you can cd into the `infrastructure` folder, and run `make deploy` to deploy a three node cluster, as well as the accompanying firewall rules.  `make auth` will authenticate your local `kubectl` tooling with this cluster.
+If you have a [Google Cloud Platform](https://cloud.google.com/) Project configured and the [Google Cloud SDK](https://cloud.google.com/sdk/) installed, you can cd into the `infrastructure` folder, and run `make deploy` to deploy a 4 node cluster over 2 nodepools, as well as the accompanying firewall rules.  `make auth` will authenticate your local `kubectl` tooling with this cluster.
+
+### Node Pools
+- There are two [Node Pools](https://cloud.google.com/container-engine/docs/node-pools) withing this cluster. 
+    - "apps" (Node Selector `role=apps`) - which is the area in which Sessons, Matchmaker and Nodescaler all run, so as to keep application separate 
+    from the game servers, and not have them impact CPU performance.
+    - "game-servers" (Node Selector `role=game-servers`) - for which game servers will be exclusively run on, and for ease of
+    autoscaling.
 
 ### Game Server
 
@@ -44,12 +51,30 @@ The `game-server` folder contains Dockerfile for the Unity dedicated server. To 
 
 The `sessions` folder contains the Go application manages the HTTP API that creates new instances of the Unity Game Server within a Pod. It also hosts the HTTP API the that Game Server connects to to register the port that it currently runs on, with the podname is it provided through an Environment variable.
 
-To build the code for the Docker image and push the image up to the Container Registry, run `make build push`. To deploy, run `make deploy-all` and it will deploy the [Redis](https://redis.io/) Stateful Set, and the [Kubernetes Deployment](https://kubernetes.io/docs/user-guide/deployments/) accompanying [Service](https://kubernetes.io/docs/user-guide/services/).
+To build the code for the Docker image and push the image up to the Container Registry, run `make build push`. 
+To deploy, run `make deploy-all` and it will deploy the [Redis](https://redis.io/) Stateful Set, and the 
+[Kubernetes Deployment](https://kubernetes.io/docs/user-guide/deployments/) and accompanying [Service](https://kubernetes.io/docs/user-guide/services/).
 
 ### Matchmaker
 The `matchmaker` folder contains a Go application that is a very simple HTTP based matchmaker that pairs the first two players that request a game in FIFO order. It coordinated with the session manager to start game servers, and inspect what IP and port they are running on, so it can be passed back to the client.
 
-To build the code for the Docker image and push the image up to the Container Registry, run `make build push`. To deploy, run `make deploy-all` and it will deploy the Redis Stateful Set, and the Kubernetes Deployment accompanying Service.
+To build the code for the Docker image and push the image up to the Container Registry, run `make build push`. 
+To deploy, run `make deploy-all` and it will deploy the Redis Stateful Set, and the Kubernetes Deployment and accompanying Service.
+
+### NodeScaler
+
+The `nodescaler` folder contains a Go application that tracks resource usage within the `game-server` node pool and
+increases the number of nodes if the amount of CPU space available falls below a certain buffer value.
+
+Note: Scaling nodes down will be implemented soon.
+
+Currently only implemented to work on Google Cloud Platform, through its [Container Engine API](https://cloud.google.com/container-engine/reference/rest/) 
+and [Compute Engine Instance Group Manager API](https://cloud.google.com/compute/docs/reference/latest/instanceGroupManagers), 
+but has been written for extension if required.
+
+To build the code for the Docker image and push the image up to the Container Registry, run `make build push`. 
+To deploy, run `make deploy-all` and it will deploy the Kubernetes Deployment for this.
+
 
 ## Licence
 Apache 2.0

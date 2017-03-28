@@ -12,7 +12,7 @@ spec:
       nodeSelector:
         role: apps
       containers:
-      - name: matchmaker
+      - name: nodescaler
         image: gcr.io/${PROJECT}/nodescaler
         imagePullPolicy: Always
         livenessProbe:

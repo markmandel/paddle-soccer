@@ -13,13 +13,12 @@
 # limitations under the License.
 
 FROM alpine:3.5
-
-# let's not use the default user
-RUN adduser -D server
-
 COPY ./bin/server /home/server/server
-RUN chown server /home/server/server
-RUN chmod o+x /home/server/server
+
+RUN apk --update add ca-certificates && \
+		adduser -D server && \
+		chown server /home/server/server && \
+		chmod o+x /home/server/server
 
 USER server
 ENTRYPOINT /home/server/server

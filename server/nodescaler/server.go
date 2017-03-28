@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/markmandel/paddle-soccer/server/nodescaler/gce"
 	"github.com/markmandel/paddle-soccer/server/pkg/kube"
 	"github.com/pkg/errors"
 	"k8s.io/client-go/kubernetes"
@@ -39,8 +40,12 @@ type Server struct {
 	// `cpuRequest` is the cpu capacity requested for each server
 	cpuRequest int64
 	// `bufferCount``is the number of cpuRequest to make sure is available
-	// at and given moment in the cluster
+	// at and given moment in the nodePool
 	bufferCount int64
+	// nodePool management implementation.
+	// for now, there is just GCE
+	nodePool NodePool
+	// minimum pool size
 }
 
 // handler is the extended http.HandleFunc to provide context for this application
@@ -60,7 +65,7 @@ func NewServer(hostAddr, nodeSelector string, cpuRequest string, bufferCount int
 		return nil, errors.Wrapf(err, "Could not parse cpu resource request: %v", cpuRequest)
 	}
 
-	s := &Server{nodeSelector: nodeSelector, cpuRequest: q.MilliValue()}
+	s := &Server{nodeSelector: nodeSelector, cpuRequest: q.MilliValue(), bufferCount: bufferCount}
 	r := s.newHandler()
 
 	s.srv = &http.Server{
@@ -82,15 +87,39 @@ func (s *Server) Start() error {
 		return errors.Wrap(err, "Could not connect to kubernetes api")
 	}
 
+	nl, err := s.newNodeList()
+	if err != nil {
+		return errors.WithMessage(err, "Could not create nodelist when starting Server")
+	}
+	// Hardcode to GCE for this proof of concept. Long term, this should be switchable.
+	np, err := gce.NewNodePool(nl.nodes.Items[0])
+	if err != nil {
+		return err
+	}
+	s.nodePool = np
+
+	// watch for the nodepool
+	gw, err := s.newGameWatcher()
+	if err != nil {
+		return err
+	}
+	gw.start()
+
 	go func() {
 		log.Print("[Info][Start] Starting node scaling...")
-		tick := time.Tick(time.Second)
+		tick := time.Tick(30 * time.Second)
 
 		for {
 			select {
 			case <-quit:
 				return
+			case <-gw.event:
+				log.Print("[Info][Scaling] Recieved Add Event, Scaling...")
+				if err := s.scaleNodes(); err != nil {
+					log.Printf("[Error][Scaling] %+v", err)
+				}
 			case <-tick:
+				log.Printf("[Info][Scaling] Tick of %#v, Scaling...", tick)
 				if err := s.scaleNodes(); err != nil {
 					log.Printf("[Error][Scaling] %+v", err)
 				}

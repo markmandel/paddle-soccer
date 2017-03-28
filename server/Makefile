@@ -47,10 +47,6 @@ docker-test:
 	-w="/go/src/github.com/markmandel/paddle-soccer/server" \
 	$(DEV_IMAGE) /bin/bash -c "/redis/src/redis-server /redis/redis.conf && make test"
 
-# run the visualiser
-visualise:
-	kubectl proxy --www=/home/$(shell whoami)/gcp-live-k8s-visualizer --www-prefix=/static/ --api-prefix=/api/ --address="0.0.0.0"
-
 # bring up the kubectl proxy if you want to look at it.
 kubectl-proxy:
 	 kubectl proxy --address=0.0.0.0
@@ -58,7 +54,8 @@ kubectl-proxy:
 # install weavescope, for nicer visualisations
 # https://www.weave.works/docs/scope/latest/installing/#k8s
 install-weavescope:
-	kubectl apply -f https://cloud.weave.works/launch/k8s/weavescope.yaml?k8s-service-type=LoadBalancer&v=1.1.0
+	kubectl apply -f https://cloud.weave.works/launch/k8s/weavescope.yaml?k8s-service-type=LoadBalancer&v=1.3.0
+	kubectl edit deployment weave-scope-app
 
 # delete everything from k8s
 clean-k8s:

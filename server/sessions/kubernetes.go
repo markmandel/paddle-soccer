@@ -87,7 +87,7 @@ func (s *Server) createSessionPod() (string, error) {
 				{
 					Name:            "sessions-game",
 					Image:           s.gameServerImage,
-					ImagePullPolicy: v1.PullAlways, // TODO: make this an env var / this is just for dev
+					ImagePullPolicy: v1.PullAlways, // this is just for dev / POC
 					Resources:       v1.ResourceRequirements{Limits: v1.ResourceList{v1.ResourceCPU: s.cpuLimit}},
 					Env: []v1.EnvVar{
 						{
