@@ -23,9 +23,9 @@
 #     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___|___/
 #
 
-NAME=soccer-infrastructure
-CLUSTER_NAME=soccer-us-west
 ZONE=us-west1-b
+NAME=soccer-infrastructure
+CLUSTER_NAME=soccer-$(ZONE)
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -36,7 +36,8 @@ ZONE=us-west1-b
 
 # Create kubernetes cluster
 deploy:
-	gcloud deployment-manager deployments create $(NAME) --config cluster.yml
+	gcloud deployment-manager deployments create $(NAME) --config cluster.yml.jinja \
+		--properties zone:$(ZONE)
 
 # Deletes entire deployment
 clean:

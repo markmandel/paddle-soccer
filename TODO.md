@@ -1,6 +1,5 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Make deployment manager script a template
 - Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.
 - Track scores once the go through the goal area (on screen)
