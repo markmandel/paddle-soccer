@@ -1,6 +1,5 @@
 # Unity Multiplayer Soccer - TODO List
 
-- what is with LOG_ENV in game-server/Dockerfile ?
 - Make deployment manager script a template
 - Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.

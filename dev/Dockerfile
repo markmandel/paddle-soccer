@@ -15,7 +15,8 @@
 FROM golang:1.8
 
 RUN apt-get update && \
-    apt-get -y install wget curl entr nano less unzip python zsh git make openssh-server libapparmor1 libltdl7
+    apt-get -y install wget curl entr nano less unzip python zsh git make openssh-server libapparmor1 libltdl7 \
+		&& rm -rf /var/lib/apt/lists/*
 
 WORKDIR /
 
@@ -34,7 +35,7 @@ RUN wget -q https://dl.google.com/dl/cloudsdk/release/google-cloud-sdk.zip && un
 RUN /google-cloud-sdk/install.sh --usage-reporting=true --path-update=true --bash-completion=true --rc-path=/root/.bashrc
 ENV PATH /google-cloud-sdk/bin:$PATH
 
-RUN gcloud components update kubectl
+RUN gcloud components update && gcloud components install kubectl
 
 #redis
 RUN mkdir redis && cd redis && wget -O redis.tar.gz -q http://download.redis.io/releases/redis-3.2.6.tar.gz && \

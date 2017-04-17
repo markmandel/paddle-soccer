@@ -38,7 +38,7 @@ func (s Server) scaleNodes() error {
 	}
 
 	available := s.cpuRequestsAvailable(nl)
-	log.Printf("[Info][scaleNodes] CPU Requests blocks of %v available: %v, with buffer of %v", s.cpuRequest, available, s.bufferCount)
+	log.Printf("[Info][scaleNodes] CPU Requests blocks of %vm. Available: %v, with buffer of %v", s.cpuRequest, available, s.bufferCount)
 	if available < s.bufferCount {
 		return s.increaseNodes(nl, s.bufferCount-available)
 	}

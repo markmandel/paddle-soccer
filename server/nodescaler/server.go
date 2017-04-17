@@ -107,7 +107,7 @@ func (s *Server) Start() error {
 
 	go func() {
 		log.Print("[Info][Start] Starting node scaling...")
-		tick := time.Tick(30 * time.Second)
+		tick := time.Tick(10 * time.Second) //TODO: Make this an env var
 
 		for {
 			select {

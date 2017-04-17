@@ -28,6 +28,4 @@ spec:
           - name: CPU_REQUEST
             value: "0.5"
           - name: BUFFER_COUNT
-            value: "5"
-        ports:
-        - containerPort: 8080
+            value: "10"

@@ -55,6 +55,7 @@ kubectl-proxy:
 # https://www.weave.works/docs/scope/latest/installing/#k8s
 install-weavescope:
 	kubectl apply -f https://cloud.weave.works/launch/k8s/weavescope.yaml?k8s-service-type=LoadBalancer&v=1.3.0
+	sleep 5
 	kubectl edit deployment weave-scope-app
 
 # delete everything from k8s
