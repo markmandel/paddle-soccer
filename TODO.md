@@ -12,4 +12,5 @@
 - Show "GOAL" when a goal happens
 - Make it so a player can't go into the goal area
 - Put a red and blue highlight on each goal, so you can tell which is which
+- Deal with disconnections/reconnections
 - Animate paddle on kick

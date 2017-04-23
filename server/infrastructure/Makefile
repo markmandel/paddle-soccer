@@ -26,6 +26,7 @@
 ZONE=us-west1-b
 NAME=soccer-infrastructure
 CLUSTER_NAME=soccer-$(ZONE)
+SIZE=2
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -48,3 +49,7 @@ auth:
 	gcloud config set container/cluster $(CLUSTER_NAME)
 	gcloud config set compute/zone $(ZONE)
 	gcloud container clusters get-credentials $(CLUSTER_NAME)
+
+# resize the game server nodepool
+resize-game-server:
+	gcloud container clusters resize $(CLUSTER_NAME) --node-pool=game-servers --size=$(SIZE)
