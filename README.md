@@ -12,6 +12,13 @@ Game servers are started up as a [Pod](https://kubernetes.io/docs/user-guide/pod
 
 Once the game server has started, we use the combination of the Kubernetes API and the aforementioned custom port registry to determine which node in the Kubernetes cluster the Pod has been scheduled on, that node's external IP and what port the game server is open on. This is then pass that back to the game client, through a match maker or otherwise, so that they can connect to it directly.
 
+## Blog Posts
+
+- [Scaling Dedicated Game Servers with Kubernetes: Part 1 - Containerising and Deploying](http://www.compoundtheory.com/scaling-dedicated-game-servers-with-kubernetes-part-1-containerising-and-deploying/)
+
+## Presentations
+[![GDC Presentation](gdc.jpg)](http://www.gdcvault.com/play/1024328/)
+
 ## Unity Structure
 The unity source code can be found in the `unity` folder.
 
