@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace Game
@@ -45,7 +45,7 @@ namespace Game
         {
             return collider =>
             {
-                if(collider.name == Ball.Name)
+                if (collider.name == Ball.Name)
                 {
                     action(collider);
                 }

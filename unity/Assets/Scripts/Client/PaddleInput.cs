@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-﻿using Game;
+using Server;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -23,6 +23,7 @@ namespace Client
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(BoxCollider))]
+    [RequireComponent(typeof(PlayerAction))]
     public class PaddleInput : NetworkBehaviour
     {
         [SerializeField]
@@ -34,23 +35,11 @@ namespace Client
         private float rotationalSpeed = 5f;
 
         [SerializeField]
-        [Tooltip("How hard to kick the ball")]
-        private float kickForce = 20f;
-
-        [SerializeField]
-        [Tooltip("Distance the paddle can kick from")]
-        private float kickDistance = 1.5f;
-
-        [SerializeField]
         [Tooltip("How much to rotate when using the keyboard input")]
         private float keyboardRotation = 0.5f;
 
-        [SerializeField]
-        [Tooltip("How far down to the bottom to kick. 2f is the bottom.")]
-        private float kickAngle = 2.7f;
-
         private Rigidbody rb;
-        private BoxCollider box;
+        private PlayerAction pa;
 
         // --- Messages ---
 
@@ -60,7 +49,7 @@ namespace Client
         private void Start()
         {
             rb = GetComponent<Rigidbody>();
-            box = GetComponent<BoxCollider>();
+            pa = GetComponent<PlayerAction>();
         }
 
         /// <summary>
@@ -70,9 +59,10 @@ namespace Client
         {
             if (isLocalPlayer)
             {
-                if(Input.GetKeyDown(KeyCode.Space) || Input.GetButtonDown("Fire1"))
+                if (Input.GetKeyDown(KeyCode.Space) || Input.GetButtonDown("Fire1"))
                 {
-                    KickBall();
+                    Debug.Log("Attempting to kick the ball!");
+                    pa.CmdKickBall();
                 }
             }
         }
@@ -103,7 +93,7 @@ namespace Client
             var deltaY = Input.GetAxis("Vertical");
 
             // skip this whole thing, if there is no input
-            if(!(deltaX == 0 && deltaY == 0))
+            if (!(deltaX == 0 && deltaY == 0))
             {
                 var targetVelocity = new Vector3(deltaX, 0, deltaY) * horizontalSpeed;
                 // convert from local to world
@@ -132,34 +122,13 @@ namespace Client
         /// </summary>
         private void KeyboardRotation()
         {
-            if(Input.GetKey(KeyCode.LeftBracket))
+            if (Input.GetKey(KeyCode.LeftBracket))
             {
                 PlayerRotation(-keyboardRotation);
             }
-            if(Input.GetKey(KeyCode.RightBracket))
+            if (Input.GetKey(KeyCode.RightBracket))
             {
                 PlayerRotation(keyboardRotation);
-            }
-        }
-
-        /// <summary>
-        /// Kicks the ball. (Currently not working)
-        /// TODO: Needs to be moved to a RPC as the ball is server side.
-        /// </summary>
-        private void KickBall()
-        {
-            var diff = new Vector3(0, box.size.y / kickAngle, 0);
-            var origin = transform.position - transform.TransformVector(diff);
-
-            RaycastHit hit;
-            if(Physics.Raycast(origin, transform.forward, out hit, kickDistance))
-            {
-                if(hit.collider.name == Ball.Name)
-                {
-                    var crb = hit.collider.GetComponent<Rigidbody>();
-                    var force = -kickForce * hit.normal;
-                    crb.AddForceAtPosition(force, hit.point, ForceMode.Impulse);
-                }
             }
         }
     }

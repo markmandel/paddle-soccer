@@ -1,6 +1,5 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Make Kicking the ball a RPC call
 - Move the ScoreController to being server side.
 - Track scores once the go through the goal area (on screen)
 - When score hits 7(?) game is over, and the server should shut down
