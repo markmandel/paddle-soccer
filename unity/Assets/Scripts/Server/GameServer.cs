@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-﻿using System;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using Random = System.Random;
@@ -71,12 +72,14 @@ namespace Server
         private static GameServer instance;
 
         // local member variables
+
+        private List<GameObject> players;
         private int connCount;
 
         private Random rnd;
         private int port;
 
-        private IUnityServer server;
+        private readonly IUnityServer server;
 
         /// <summary>
         /// Returns the singleton instances if it exists.
@@ -103,6 +106,7 @@ namespace Server
         {
             rnd = new Random();
             this.server = server;
+            players = new List<GameObject>();
         }
 
         /// <summary>
@@ -127,11 +131,9 @@ namespace Server
                 Stop();
                 throw new Exception(string.Format("Error starting server after {0} retries", maxStartRetries));
             }
-            else
-            {
-                throw new Exception(string.Format("{0} Can only be started once!",
-                    typeof(GameServer).FullName));
-            }
+
+            throw new Exception(string.Format("{0} Can only be started once!",
+                typeof(GameServer).FullName));
         }
 
         /// <summary>
@@ -212,16 +214,27 @@ namespace Server
         /// <summary>
         /// Should be called when the server has a player added
         /// </summary>
-        /// <param name="playerCount">Current number of players</param>
-        public static void OnServerAddPlayer(int playerCount)
+        /// <param name="player"></param>
+        public static void OnServerAddPlayer(GameObject player)
         {
-            Debug.LogFormat("[GameNetwork] Adding Player {0}", playerCount);
+            Debug.LogFormat("[GameNetwork] Adding Player {0}. Count: {1}", player, Instance.players.Count);
+            Instance.players.Add(player);
 
-            if (playerCount == playersNeededForGame && OnGameReady != null)
+            if (Instance.players.Count == playersNeededForGame && OnGameReady != null)
             {
                 Debug.Log("[GameNetwork] Firing on game ready!");
                 OnGameReady();
             }
+        }
+
+        /// <summary>
+        /// List of players that are currently connected to the game,
+        /// In the order that they connected in.
+        /// </summary>
+        /// <returns></returns>
+        public static List<GameObject> GetPlayers()
+        {
+            return Instance.players;
         }
     }
 }

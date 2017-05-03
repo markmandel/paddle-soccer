@@ -22,19 +22,6 @@ namespace Game
     /// </summary>
     public static class Goals
     {
-        private static readonly string PlayerOneGoal = "/Soccerfield/PlayerGoal.1";
-        private static readonly string PlayerTwoGoal = "/Soccerfield/PlayerGoal.2";
-
-        public static GameObject FindPlayerTwoGoal()
-        {
-            return GameObject.Find(PlayerTwoGoal);
-        }
-
-        public static GameObject FindPlayerOneGoal()
-        {
-            return GameObject.Find(PlayerOneGoal);
-        }
-
         /// <summary>
         /// Rseturns a event handler for the TriggerObservable that
         /// only fires when the ball goes into the goal.

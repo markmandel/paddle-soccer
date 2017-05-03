@@ -61,7 +61,6 @@ namespace Client
             {
                 if (Input.GetKeyDown(KeyCode.Space) || Input.GetButtonDown("Fire1"))
                 {
-                    Debug.Log("Attempting to kick the ball!");
                     pa.CmdKickBall();
                 }
             }

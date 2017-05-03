@@ -29,6 +29,13 @@ namespace Server.Controllers
         [Tooltip("The soccer ball prefab")]
         private GameObject prefabBall;
 
+        [SerializeField]
+        [Tooltip("Goal #1")]
+        private GameObject goal1;
+        [SerializeField]
+        [Tooltip("Goal #2")]
+        private GameObject goal2;
+
         /// <summary>
         /// The current instance of the ball.
         /// </summary>
@@ -60,11 +67,9 @@ namespace Server.Controllers
         {
             Debug.Log("[Ball Controller] Initialising...");
             isGoal = false;
-            var p1Goal = Goals.FindPlayerOneGoal().GetComponent<TriggerObservable>();
-            var p2Goal = Goals.FindPlayerTwoGoal().GetComponent<TriggerObservable>();
 
-            p1Goal.TriggerEnter += OnGoal;
-            p2Goal.TriggerEnter += OnGoal;
+            goal1.GetComponent<TriggerObservable>().TriggerEnter += OnGoal;
+            goal2.GetComponent<TriggerObservable>().TriggerEnter += OnGoal;
 
             GameServer.OnGameReady += CreateBall;
         }

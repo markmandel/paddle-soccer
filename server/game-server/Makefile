@@ -61,6 +61,12 @@ clean-docker:
 run:
 	docker run --rm --name $(RUN_NAME) -e "MIN_PORT=7777" -e "MAX_PORT=7777" -p 7777:7777/udp $(TAG)
 
+# run the server locally
+run-local:
+	export MIN_PORT=7777 && \
+	export MAX_PORT=7777 && \
+	$(unity_build)/Linux/Server.x86_64 -logFile
+
 stop:
 	docker stop $(RUN_NAME)
 

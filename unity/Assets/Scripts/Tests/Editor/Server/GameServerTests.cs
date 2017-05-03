@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-﻿using System;
+using System;
 using System.Collections.Generic;
 using NSubstitute;
 using NUnit.Framework;
 using Server;
+using UnityEngine;
 using UnityEngine.Networking;
 
 namespace Tests.Editor.Server
@@ -104,29 +105,36 @@ namespace Tests.Editor.Server
             GameServer.OnGameReady += () => isReady = true;
             Assert.False(isReady);
 
+            var p1 = new GameObject();
+            p1.name = "p1";
+            var p2 = new GameObject();
+            p2.name = "p2";
+
             var fixtures = new List<AddPlayerFixure>
             {
-                new AddPlayerFixure(0, false),
-                new AddPlayerFixure(1, false),
-                new AddPlayerFixure(2, true)
+                new AddPlayerFixure(false, p1, new List<GameObject> {p1}),
+                new AddPlayerFixure(true, p2, new List<GameObject> {p1, p2})
             };
 
             fixtures.ForEach(x =>
             {
-                GameServer.OnServerAddPlayer(x.playerCount);
+                GameServer.OnServerAddPlayer(x.player);
                 Assert.AreEqual(x.isReady, isReady);
+                Assert.AreEqual(x.playerList, GameServer.GetPlayers());
             });
         }
 
         private class AddPlayerFixure
         {
-            public int playerCount;
+            public GameObject player;
+            public List<GameObject> playerList;
             public bool isReady;
 
-            public AddPlayerFixure(int playerCount, bool isReady)
+            public AddPlayerFixure(bool isReady, GameObject player, List<GameObject> playerList)
             {
-                this.playerCount = playerCount;
                 this.isReady = isReady;
+                this.player = player;
+                this.playerList = playerList;
             }
         }
     }

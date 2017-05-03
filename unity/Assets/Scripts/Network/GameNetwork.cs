@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-﻿using System;
+using System;
 using System.Collections;
 using System.Text;
 using Client;
@@ -83,9 +83,9 @@ namespace Network
         public override void OnServerAddPlayer(NetworkConnection conn, short playerControllerId)
         {
             base.OnServerAddPlayer(conn, playerControllerId);
-            GameServer.OnServerAddPlayer(numPlayers);
+            var playerController = conn.playerControllers[playerControllerId];
+            GameServer.OnServerAddPlayer(playerController.gameObject);
         }
-
 
         // --- Client Commands ---
 
