@@ -22,7 +22,7 @@ Once the game server has started, we use the combination of the Kubernetes API a
 ## Unity Structure
 The unity source code can be found in the `unity` folder.
 
-It was built with [Unity 5.6.0b10](https://unity3d.com/unity/beta/unity5.6.0b3). It was built on Linux, but the
+It was built with [Unity 5.6.0](https://store.unity.com/download). It was built on Linux, but the
 client should run on any OS.
 
 To quickly make the Client and Server builds (for Linux), you can run the [Build Pipeline](https://docs.unity3d.com/ScriptReference/BuildPipeline.html) under the `Build > Build Game and Server` menu
