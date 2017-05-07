@@ -12,13 +12,25 @@ namespace Game
         /// <summary>
         /// Synced field for storing the current score of a goal
         /// </summary>
-        [SyncVar]
+        [SyncVar(hook = "scoreHook")]
         private int _score;
 
         /// <summary>
         /// Player name - makes debugging easier.
         /// </summary>
         public string Name;
+
+        /// <summary>
+        /// Delegate for when the score has changed
+        /// </summary>
+        /// <param name="score"></param>
+        /// <param name="isLocalPlayer">Whether this is the local player or not</param>
+        public delegate void Scored(int score, bool isLocalPlayer);
+
+        /// <summary>
+        /// Fired when a score has changed
+        /// </summary>
+        public event Scored ScoreIncrease;
 
         /// <summary>
         /// Current score. Only the server can set the value
@@ -55,7 +67,22 @@ namespace Game
         public void TargetGoal(TriggerObservable observable)
         {
             observable.TriggerEnter += Goals.OnBallGoal(_ => Score += 1);
-            observable.TriggerEnter += Goals.OnBallGoal(_ => Debug.LogFormat("[PlayerScore] GOAL!!! {0}, Score: {1}", Name, Score));
+            observable.TriggerEnter += Goals.OnBallGoal(
+                _ => Debug.LogFormat("[PlayerScore] GOAL!!! {0}, Score: {1}", Name, Score));
+        }
+
+        /// <summary>
+        /// Hook for when the score changes
+        /// </summary>
+        /// <param name="score"></param>
+        private void scoreHook(int score)
+        {
+            Debug.LogFormat("[PlayerScore] Score Hook: {0}", score);
+            if (!isServer)
+            {
+                _score = score;
+                ScoreIncrease(_score, isLocalPlayer);
+            }
         }
     }
 }

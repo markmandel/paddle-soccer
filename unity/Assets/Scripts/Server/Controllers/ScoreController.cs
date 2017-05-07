@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+using System;
 using Game;
 using UnityEngine;
 
@@ -32,6 +33,19 @@ namespace Server.Controllers
 
         // --- Messages ---
 
+        private void OnValidate()
+        {
+            if (goal1 == null)
+            {
+                throw new Exception("[ScoreController] goal1 is null. This is bad");
+            }
+
+            if (goal2 == null)
+            {
+                throw new Exception("[ScoreController] goal2 is null. This is bad");
+            }
+        }
+
         /// <summary>
         /// Connect OnGameReady to connect players to their respective goals
         /// </summary>
@@ -49,7 +63,6 @@ namespace Server.Controllers
         {
             Debug.Log("Connecting Players to Goals!");
             var players = GameServer.GetPlayers();
-
 
             var p1Score = players[0].GetComponent<PlayerScore>();
             p1Score.Name = "Player 1";

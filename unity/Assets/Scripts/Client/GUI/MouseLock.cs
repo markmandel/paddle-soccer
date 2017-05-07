@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Client.GUI
 {
@@ -36,11 +36,11 @@ namespace Client.GUI
         /// </summary>
         private void Update()
         {
-            if(Input.GetButtonDown("Fire1") && Cursor.visible)
+            if (Input.GetButtonDown("Fire1") && Cursor.visible)
             {
                 LockMouse();
             }
-            else if(Input.GetKeyDown(KeyCode.Escape))
+            else if (Input.GetKeyDown(KeyCode.Escape))
             {
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
@@ -54,7 +54,7 @@ namespace Client.GUI
         /// </summary>
         private static void LockMouse()
         {
-            if(!Application.isEditor)
+            if (!Application.isEditor)
             {
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
