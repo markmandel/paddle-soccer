@@ -1,6 +1,5 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Display scores on screen
 - When score hits 3 game is over, and the server should shut down
     - Display "Winner" / "Loser" on screen
 - Autoscaling (Down)
