@@ -26,6 +26,11 @@ namespace Server
         bool StartServer();
 
         /// <summary>
+        /// Shuts down the server and closes all connections
+        /// </summary>
+        void Shutdown();
+
+        /// <summary>
         /// Change the port the server starts on.
         /// </summary>
         /// <param name="port">The port to use</param>

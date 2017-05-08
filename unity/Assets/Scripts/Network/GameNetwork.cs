@@ -28,7 +28,7 @@ namespace Network
     /// </summary>
     public class GameNetwork : NetworkManager, IUnityServer, IUnityClient
     {
-        public readonly string Version = "0.3";
+        public readonly string Version = "0.1";
 
         /// <summary>
         /// How many players have joined the game?
@@ -64,15 +64,6 @@ namespace Network
         {
             base.OnServerConnect(conn);
             GameServer.OnServerConnect(conn);
-        }
-
-        /// <summary>
-        /// Runs when Server stops. Delegates to GameServer.Stop
-        /// </summary>
-        public override void OnStopServer()
-        {
-            base.OnStopServer();
-            GameServer.Stop();
         }
 
         /// <summary>
@@ -193,6 +184,15 @@ namespace Network
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Close all connections, and then exits the servers
+        /// </summary>
+        public void Shutdown()
+        {
+            NetworkManager.Shutdown();
+            Application.Quit();
         }
 
         /// <summary>

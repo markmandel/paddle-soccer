@@ -13,6 +13,7 @@
 // limitations under the License.
 
 using System;
+using System.Collections;
 using Game;
 using UnityEngine;
 
@@ -52,6 +53,7 @@ namespace Server.Controllers
         private void Start()
         {
             GameServer.OnGameReady += ConnectPlayerGoals;
+            GameServer.OnGameReady += ConnectDisconnectOnWin;
         }
 
         // --- Functions --
@@ -71,6 +73,40 @@ namespace Server.Controllers
             var p2Score = players[1].GetComponent<PlayerScore>();
             p2Score.Name = "Player 2";
             p2Score.TargetGoal(goal1.GetComponent<TriggerObservable>());
+        }
+
+        /// <summary>
+        /// Connect up to each player score, so that the server will disconnect on winning
+        /// </summary>
+        private void ConnectDisconnectOnWin()
+        {
+            GameServer.GetPlayers().ForEach(x => x.GetComponent<PlayerScore>().ScoreChange += DisconnectOnWin);
+        }
+
+        /// <summary>
+        /// PlayerScore.Scored delegate such that when the scores reach
+        /// 3, then shut down the server after 5 seconds
+        /// </summary>
+        /// <param name="score"></param>
+        /// <param name="isLocalPlayer"></param>
+        private void DisconnectOnWin(int score, bool isLocalPlayer)
+        {
+            Debug.LogFormat("[ScoreController] DisconnectOnWin: {0}, {1}, {2}", score, isLocalPlayer, PlayerScore.WinningScore);
+            if (score >= PlayerScore.WinningScore)
+            {
+                Debug.LogFormat("[ScoreController] score of {0} is greater than the {1} winnier score - disconnecting after 5 seconds", score, PlayerScore.WinningScore);
+                StartCoroutine(StopServer());
+            }
+        }
+
+        /// <summary>
+        /// Coroutine for stopping the server, after a 5 second wait
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator StopServer()
+        {
+            yield return new WaitForSeconds(5);
+            GameServer.Stop();
         }
     }
 }

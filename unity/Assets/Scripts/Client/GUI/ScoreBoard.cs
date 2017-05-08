@@ -1,4 +1,5 @@
 ﻿using System;
+using Game;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -39,11 +40,11 @@ namespace Client.GUI
             Debug.LogFormat("[ScoreBoard] I gots a score! {0}, is local player: {1}", score, isPlayerLocal);
             if (isPlayerLocal)
             {
-                yourScore.text = string.Format("You: {0}/3", score);
+                yourScore.text = string.Format("You: {0}/{1}", score, PlayerScore.WinningScore);
             }
             else
             {
-                opponentScore.text = string.Format("Them: {0}/3", score);
+                opponentScore.text = string.Format("Them: {0}/{1}", score, PlayerScore.WinningScore);
             }
         }
     }

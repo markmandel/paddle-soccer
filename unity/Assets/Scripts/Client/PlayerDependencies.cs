@@ -27,7 +27,7 @@ namespace Client
                 var playerScore = GetComponent<PlayerScore>();
                 // I know people don't like this approach, but can't find a better way?
                 var scoreBoard = GameObject.Find(ClientControllerName).GetComponent<ScoreBoard>();
-                playerScore.ScoreIncrease += scoreBoard.OnScore;
+                playerScore.ScoreChange += scoreBoard.OnScore;
             }
         }
 
@@ -40,7 +40,7 @@ namespace Client
             {
                 var playerScore = GetComponent<PlayerScore>();
                 var scoreBoard = GameObject.Find(ClientControllerName).GetComponent<ScoreBoard>();
-                playerScore.ScoreIncrease -= scoreBoard.OnScore;
+                playerScore.ScoreChange -= scoreBoard.OnScore;
             }
         }
 

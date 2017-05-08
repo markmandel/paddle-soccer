@@ -1,7 +1,6 @@
 # Unity Multiplayer Soccer - TODO List
 
-- When score hits 3 game is over, and the server should shut down
-    - Display "Winner" / "Loser" on screen
+- Display "Winner" / "Loser" on screen after game finishes
 - Autoscaling (Down)
     - If removing a node will still keep you above buffer - then cordon the node with the least pods on it
     - (up) if autoscaling up, check to see if there are cordoned nodes to turn back on

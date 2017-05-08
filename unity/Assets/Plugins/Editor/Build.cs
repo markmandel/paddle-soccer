@@ -45,6 +45,7 @@ namespace Plugins.Editor
             }
             finally
             {
+                Debug.Log("Resetting Product Name back to original name");
                 PlayerSettings.productName = originalName;
             }
         }

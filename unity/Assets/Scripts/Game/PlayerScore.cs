@@ -10,9 +10,14 @@ namespace Game
     public class PlayerScore : NetworkBehaviour
     {
         /// <summary>
+        /// Maximum score a player can get to
+        /// </summary>
+        public const int WinningScore = 3;
+
+        /// <summary>
         /// Synced field for storing the current score of a goal
         /// </summary>
-        [SyncVar(hook = "scoreHook")]
+        [SyncVar(hook = "ScoreHook")]
         private int _score;
 
         /// <summary>
@@ -30,11 +35,12 @@ namespace Game
         /// <summary>
         /// Fired when a score has changed
         /// </summary>
-        public event Scored ScoreIncrease;
+        public event Scored ScoreChange;
 
         /// <summary>
         /// Current score. Only the server can set the value
         /// Synced via Syncvar internally from server->client
+        /// Will fire ScoreChange on the server side
         /// </summary>
         public int Score
         {
@@ -44,6 +50,7 @@ namespace Game
                 if (isServer)
                 {
                     _score = value;
+                    ScoreHook(_score);
                 }
             }
         }
@@ -75,13 +82,17 @@ namespace Game
         /// Hook for when the score changes
         /// </summary>
         /// <param name="score"></param>
-        private void scoreHook(int score)
+        private void ScoreHook(int score)
         {
             Debug.LogFormat("[PlayerScore] Score Hook: {0}", score);
             if (!isServer)
             {
                 _score = score;
-                ScoreIncrease(_score, isLocalPlayer);
+            }
+
+            if (ScoreChange != null)
+            {
+                ScoreChange(_score, isLocalPlayer);
             }
         }
     }

@@ -75,7 +75,6 @@ namespace Server
 
         private List<GameObject> players;
         private int connCount;
-
         private Random rnd;
         private int port;
 
@@ -191,6 +190,7 @@ namespace Server
         /// </summary>
         public static void Stop()
         {
+            instance.server.Shutdown();
             OnGameReady = null;
             instance = null;
         }
