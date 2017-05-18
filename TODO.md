@@ -1,6 +1,6 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Display "Winner" / "Loser" on screen after game finishes
+- Use pod affinity to keep all the game instances toghether
 - Autoscaling (Down)
     - If removing a node will still keep you above buffer - then cordon the node with the least pods on it
     - (up) if autoscaling up, check to see if there are cordoned nodes to turn back on

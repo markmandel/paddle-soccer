@@ -95,4 +95,4 @@ clean-unity:
 
 # run the tests
 test:
-	$(UNITY_EDITOR) -batchmode -projectPath "$(unity_src)" -runEditorTests -editorTestsResultFile "/tmp/soccer-multiplayer"
+	$(UNITY_EDITOR) -batchmode -projectPath "$(unity_src)" -logFile .unity-test.log -runEditorTests -editorTestsResultFile "/tmp/paddle-soccer.xml"

@@ -22,7 +22,7 @@ namespace Server.Controllers
     /// <summary>
     /// Manages the score and goals for both players
     /// </summary>
-    public class ScoreController : MonoBehaviour
+    public class ScoreController : MonoBehaviour, IScoreController
     {
         [SerializeField]
         [Tooltip("Goal #1")]
@@ -31,6 +31,8 @@ namespace Server.Controllers
         [SerializeField]
         [Tooltip("Goal #2")]
         private GameObject goal2;
+
+        private ScoreControllerLogic logic;
 
         // --- Messages ---
 
@@ -52,6 +54,7 @@ namespace Server.Controllers
         /// </summary>
         private void Start()
         {
+            logic = new ScoreControllerLogic(this);
             GameServer.OnGameReady += ConnectPlayerGoals;
             GameServer.OnGameReady += ConnectDisconnectOnWin;
         }
@@ -80,32 +83,26 @@ namespace Server.Controllers
         /// </summary>
         private void ConnectDisconnectOnWin()
         {
-            GameServer.GetPlayers().ForEach(x => x.GetComponent<PlayerScore>().ScoreChange += DisconnectOnWin);
+            GameServer.GetPlayers().ForEach(x => x.GetComponent<PlayerScore>().ScoreChange += logic.DisconnectOnWin);
         }
 
         /// <summary>
-        /// PlayerScore.Scored delegate such that when the scores reach
-        /// 3, then shut down the server after 5 seconds
+        /// Stop the server after a number of seconds
         /// </summary>
-        /// <param name="score"></param>
-        /// <param name="isLocalPlayer"></param>
-        private void DisconnectOnWin(int score, bool isLocalPlayer)
+        /// <param name="seconds"></param>
+        public void DelayedStopServer(int seconds)
         {
-            Debug.LogFormat("[ScoreController] DisconnectOnWin: {0}, {1}, {2}", score, isLocalPlayer, PlayerScore.WinningScore);
-            if (score >= PlayerScore.WinningScore)
-            {
-                Debug.LogFormat("[ScoreController] score of {0} is greater than the {1} winnier score - disconnecting after 5 seconds", score, PlayerScore.WinningScore);
-                StartCoroutine(StopServer());
-            }
+            StartCoroutine(StopServer(seconds));
         }
 
         /// <summary>
         /// Coroutine for stopping the server, after a 5 second wait
         /// </summary>
+        /// <param name="seconds"></param>
         /// <returns></returns>
-        private IEnumerator StopServer()
+        private IEnumerator StopServer(int seconds)
         {
-            yield return new WaitForSeconds(5);
+            yield return new WaitForSeconds(seconds);
             GameServer.Stop();
         }
     }

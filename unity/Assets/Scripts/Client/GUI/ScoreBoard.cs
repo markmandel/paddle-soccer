@@ -1,5 +1,4 @@
 ﻿using System;
-using Game;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,6 +10,8 @@ namespace Client.GUI
     /// </summary>
     public class ScoreBoard : MonoBehaviour
     {
+        private ScoreBoardLogic logic;
+
         [SerializeField]
         [Tooltip("Your score field")]
         private Text yourScore;
@@ -19,7 +20,16 @@ namespace Client.GUI
         [Tooltip("Your opponent's score field")]
         private Text opponentScore;
 
+        [SerializeField]
+        [Tooltip("The center message box")]
+        private Text centerMessage;
+
         // --- Messages ---
+
+        private void Start()
+        {
+            logic = new ScoreBoardLogic(yourScore, opponentScore, centerMessage);
+        }
 
         private void OnValidate()
         {
@@ -31,21 +41,22 @@ namespace Client.GUI
             {
                 throw new Exception("Opponent Score is null. It should not be");
             }
+            if (centerMessage == null)
+            {
+                throw new Exception("Center Message is null. It should not be");
+            }
         }
 
         // --- Functions ---
-
+        
+        /// <summary>
+        /// Delegate to ScoreBoardLogic.OnScore
+        /// </summary>
+        /// <param name="score"></param>
+        /// <param name="isPlayerLocal"></param>
         public void OnScore(int score, bool isPlayerLocal)
         {
-            Debug.LogFormat("[ScoreBoard] I gots a score! {0}, is local player: {1}", score, isPlayerLocal);
-            if (isPlayerLocal)
-            {
-                yourScore.text = string.Format("You: {0}/{1}", score, PlayerScore.WinningScore);
-            }
-            else
-            {
-                opponentScore.text = string.Format("Them: {0}/{1}", score, PlayerScore.WinningScore);
-            }
+            logic.OnScore(score, isPlayerLocal);
         }
     }
 }
