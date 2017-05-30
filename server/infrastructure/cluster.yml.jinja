@@ -21,6 +21,7 @@ resources:
     cluster:
       name: soccer-{{ properties["zone"] }}
       description: side server cluster for soccer multiplayer, in zone {{ properties["zone"] }}
+      initialClusterVersion: 1.6.4
       nodePools:
         - name: "apps"
           initialNodeCount: 3

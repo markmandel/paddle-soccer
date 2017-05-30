@@ -38,7 +38,7 @@ ENV PATH /google-cloud-sdk/bin:$PATH
 RUN gcloud components update && gcloud components install kubectl
 
 #redis
-RUN mkdir redis && cd redis && wget -O redis.tar.gz -q http://download.redis.io/releases/redis-3.2.6.tar.gz && \
+RUN mkdir redis && cd redis && wget -O redis.tar.gz -q http://download.redis.io/releases/redis-3.2.9.tar.gz && \
     tar xzf redis.tar.gz --strip-components=1 && rm redis.tar.gz && make
 RUN sed -i "s/daemonize no/daemonize yes/" /redis/redis.conf
 RUN sed -i 's|logfile ""|logfile "/redis/redis.log"|' /redis/redis.conf
