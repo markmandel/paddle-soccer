@@ -20,19 +20,20 @@ import (
 	"log"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/pkg/api/resource"
 	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/runtime"
 	core "k8s.io/client-go/testing"
 )
 
 func TestScaleNodes(t *testing.T) {
 	nodes := &v1.NodeList{Items: []v1.Node{
-		{ObjectMeta: v1.ObjectMeta{Name: "foo", Labels: map[string]string{"app": "game-server"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "foo", Labels: map[string]string{"app": "game-server"}},
 			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("2.0")},
 				Conditions: readyNodeCondition}},
-		{ObjectMeta: v1.ObjectMeta{Name: "bar", Labels: map[string]string{"app": "game-server"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "bar", Labels: map[string]string{"app": "game-server"}},
 			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("2.0")},
 				Conditions: readyNodeCondition}}}}
 
@@ -56,12 +57,12 @@ func TestScaleNodes(t *testing.T) {
 		if a.(core.ListAction).GetListRestrictions().Fields.String() == "spec.nodeName=foo" {
 			return true,
 				&v1.PodList{Items: []v1.Pod{
-					{ObjectMeta: v1.ObjectMeta{Name: "pod1", Namespace: "default"},
+					{ObjectMeta: metav1.ObjectMeta{Name: "pod1", Namespace: "default"},
 						Spec: v1.PodSpec{
 							Containers: []v1.Container{
 								{Resources: v1.ResourceRequirements{
 									Requests: v1.ResourceList{v1.ResourceCPU: resource.MustParse("0.5")}}}}}},
-					{ObjectMeta: v1.ObjectMeta{Name: "pod2", Namespace: "default"},
+					{ObjectMeta: metav1.ObjectMeta{Name: "pod2", Namespace: "default"},
 						Spec: v1.PodSpec{
 							Containers: []v1.Container{
 								{Resources: v1.ResourceRequirements{
@@ -79,7 +80,7 @@ func TestScaleNodes(t *testing.T) {
 		if a.(core.ListAction).GetListRestrictions().Fields.String() == "spec.nodeName=bar" {
 			return true,
 				&v1.PodList{Items: []v1.Pod{
-					{ObjectMeta: v1.ObjectMeta{Name: "pod1", Namespace: "default"},
+					{ObjectMeta: metav1.ObjectMeta{Name: "pod1", Namespace: "default"},
 						Spec: v1.PodSpec{
 							Containers: []v1.Container{
 								{Resources: v1.ResourceRequirements{

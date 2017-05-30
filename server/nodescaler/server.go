@@ -17,19 +17,18 @@ package nodescaler
 import (
 	"log"
 	"net/http"
-
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/markmandel/paddle-soccer/server/nodescaler/gce"
 	"github.com/markmandel/paddle-soccer/server/pkg/kube"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/pkg/api/resource"
 )
 
 // Version is the current api version number
-const Version string = "nodescaler:0.1"
+const Version string = "nodescaler:0.2"
 
 // Server is the http server instance
 type Server struct {

@@ -72,3 +72,6 @@ test-create:
 
 clean-game-servers:
 	kubectl get pod --selector sessions=game | tail -n +2 | awk '{print $$1}' | xargs kubectl delete pod
+
+game-server-nodes:
+	kubectl describe pods --selector sessions=game | grep Node: | sort

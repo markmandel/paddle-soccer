@@ -52,7 +52,6 @@ RUN go get github.com/golang/lint/golint
 RUN go get golang.org/x/tools/cmd/goimports
 RUN go get github.com/kisielk/errcheck
 RUN go get github.com/golang/dep/...
-RUN go get github.com/govend/govend
 
 # copy these tools into Go install, so we can mount on /go
 # and when we mount the go sdk they are available

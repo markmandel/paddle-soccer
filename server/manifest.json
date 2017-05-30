@@ -1,7 +1,0 @@
-{
-    "dependencies": {
-        "k8s.io/client-go": {
-            "branch": "release-2.0"
-        }
-    }
-}

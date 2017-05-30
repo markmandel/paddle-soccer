@@ -685,12 +685,11 @@ type Device struct {
 	//
 	// Possible values include:
 	// - "managedDevice", a device that has the EMM's device policy
-	// controller (DPC) as the device owner,
+	// controller (DPC) as the device owner.
 	// - "managedProfile", a device that has a profile managed by the DPC
 	// (DPC is profile owner) in addition to a separate, personal profile
-	// that is unavailable to the DPC,
-	// - "containerApp", a device running the container App. The container
-	// App is managed by the DPC,
+	// that is unavailable to the DPC.
+	// - "containerApp", no longer used (deprecated).
 	// - "unmanagedProfile", a device that has been allowed (by the domain's
 	// admin, using the Admin Console to enable the privilege) to use
 	// managed Google Play, but the profile is itself not owned by a DPC.
@@ -1125,6 +1124,20 @@ type GroupLicense struct {
 	// number of licenses that can be provisioned (for example, if the
 	// acquisition kind is "free").
 	NumPurchased int64 `json:"numPurchased,omitempty"`
+
+	// Permissions: The permission approval status of the product. This
+	// field is only set if the product is approved. Possible states are:
+	// - "currentApproved", the current set of permissions is approved, but
+	// additional permissions will require the administrator to reapprove
+	// the product (If the product was approved without specifying the
+	// approved permissions setting, then this is the default behavior.),
+	// - "needsReapproval", the product has unapproved permissions. No
+	// additional product licenses can be assigned until the product is
+	// reapproved,
+	// - "allCurrentAndFutureApproved", the current permissions are approved
+	// and any future permission updates will be automatically approved
+	// without administrator review.
+	Permissions string `json:"permissions,omitempty"`
 
 	// ProductId: The ID of the product that the license is for. For
 	// example, "app:com.google.android.gm".
@@ -1733,6 +1746,9 @@ type Notification struct {
 	// NewPermissionsEvent: Notifications about new app permissions.
 	NewPermissionsEvent *NewPermissionsEvent `json:"newPermissionsEvent,omitempty"`
 
+	// NotificationType: Type of the notification.
+	NotificationType string `json:"notificationType,omitempty"`
+
 	// ProductApprovalEvent: Notifications about changes to a product's
 	// approval status.
 	ProductApprovalEvent *ProductApprovalEvent `json:"productApprovalEvent,omitempty"`
@@ -1944,8 +1960,7 @@ type Product struct {
 	// available to people who own it).
 	ProductPricing string `json:"productPricing,omitempty"`
 
-	// RequiresContainerApp: Whether this app can only be installed on
-	// devices using the Android container app.
+	// RequiresContainerApp: Deprecated.
 	RequiresContainerApp bool `json:"requiresContainerApp,omitempty"`
 
 	// SmallIconUrl: A link to a smaller image that can be used as an icon
@@ -2146,12 +2161,14 @@ type ProductSet struct {
 
 	// ProductSetBehavior: The interpretation of this product set. "unknown"
 	// should never be sent and is ignored if received. "whitelist" means
-	// that this product set constitutes a whitelist. "includeAll" means
-	// that all products are accessible, including products that are
+	// that the user is entitled to access the product set. "includeAll"
+	// means that all products are accessible, including products that are
 	// approved, products with revoked approval, and products that have
-	// never been approved. If the value is "includeAll", the value of the
-	// productId field is therefore ignored. If a value is not supplied, it
-	// is interpreted to be "whitelist" for backwards compatibility.
+	// never been approved. "allApproved" means that the user is entitled to
+	// access all products that are approved for the enterprise. If the
+	// value is "allApproved" or "includeAll", the productId field is
+	// ignored. If no value is provided, it is interpreted as "whitelist"
+	// for backwards compatibility.
 	ProductSetBehavior string `json:"productSetBehavior,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2189,6 +2206,14 @@ type ProductsApproveRequest struct {
 	// after the product was approved, or not include new permissions if the
 	// product was updated since the URL was generated.
 	ApprovalUrlInfo *ApprovalUrlInfo `json:"approvalUrlInfo,omitempty"`
+
+	// ApprovedPermissions: Sets how new permission requests for the product
+	// are handled. "allPermissions" automatically approves all current and
+	// future permissions for the product. "currentPermissionsOnly" approves
+	// the current set of permissions for the product, but any future
+	// permissions added through updates will require manual reapproval. If
+	// not specified, only the current set of permissions will be approved.
+	ApprovedPermissions string `json:"approvedPermissions,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ApprovalUrlInfo") to
 	// unconditionally include in API requests. By default, fields with

@@ -18,14 +18,14 @@ import (
 	"log"
 
 	"github.com/pkg/errors"
-	"k8s.io/client-go/pkg/api/unversioned"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/pkg/api/v1"
 )
 
 // hostNameAndIP returns a map of Kubernetes node hostname (key) to external IP (value)
 func (s *Server) hostNameAndIP() (map[string]string, error) {
 	result := make(map[string]string)
-	list, err := s.cs.CoreV1().Nodes().List(v1.ListOptions{})
+	list, err := s.cs.CoreV1().Nodes().List(metav1.ListOptions{})
 
 	if err != nil {
 		return result, errors.Wrap(err, "Error Listing nodes")
@@ -57,7 +57,7 @@ func (s *Server) hostNameAndIP() (map[string]string, error) {
 func (s *Server) externalNodeIPofPod(sess Session, m map[string]string) (string, error) {
 	log.Printf("[Info][Kubernetes] Retrieving pod information for pod: %v", sess.ID)
 
-	pod, err := s.cs.CoreV1().Pods("default").Get(sess.ID)
+	pod, err := s.cs.CoreV1().Pods("default").Get(sess.ID, metav1.GetOptions{})
 	if err != nil {
 		return "", errors.Wrapf(err, "Error getting pod information for pod %v", sess.ID)
 	}
@@ -70,14 +70,16 @@ func (s *Server) createSessionPod() (string, error) {
 	log.Print("[Info][create] Creating new game session")
 	namespace := "default"
 
+	labels := map[string]string{
+		"sessions": "game",
+	}
+
 	pod := v1.Pod{
-		TypeMeta: unversioned.TypeMeta{APIVersion: "v1", Kind: "Pod"},
-		ObjectMeta: v1.ObjectMeta{
+		TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Pod"},
+		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: "sessions-game-",
-			Labels: map[string]string{
-				"sessions": "game",
-			},
-			Namespace: namespace,
+			Labels:       labels,
+			Namespace:    namespace,
 		},
 		Spec: v1.PodSpec{
 			HostNetwork:   true,
@@ -96,6 +98,20 @@ func (s *Server) createSessionPod() (string, error) {
 								FieldRef: &v1.ObjectFieldSelector{
 									FieldPath: "metadata.name",
 								},
+							},
+						},
+					},
+				},
+			},
+			// Make it so that each game server is as close to each other as they can be
+			// This lowers fragmentation, and makes it easier to scale down
+			Affinity: &v1.Affinity{
+				PodAffinity: &v1.PodAffinity{
+					PreferredDuringSchedulingIgnoredDuringExecution: []v1.WeightedPodAffinityTerm{
+						{
+							Weight: 1, PodAffinityTerm: v1.PodAffinityTerm{
+								LabelSelector: &metav1.LabelSelector{MatchLabels: labels},
+								TopologyKey:   metav1.LabelHostname,
 							},
 						},
 					},

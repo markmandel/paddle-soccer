@@ -136,7 +136,7 @@ type ProjectsLocationsKeyRingsCryptoKeysCryptoKeyVersionsService struct {
 // The configuration determines which permission types are logged, and
 // what
 // identities, if any, are exempted from logging.
-// An AuditConifg must have one or more AuditLogConfigs.
+// An AuditConfig must have one or more AuditLogConfigs.
 //
 // If there are AuditConfigs for both `allServices` and a specific
 // service,
@@ -145,42 +145,45 @@ type ProjectsLocationsKeyRingsCryptoKeysCryptoKeyVersionsService struct {
 // specified in each AuditConfig are enabled, and the exempted_members
 // in each
 // AuditConfig are exempted.
+//
 // Example Policy with multiple AuditConfigs:
-// {
-//   "audit_configs": [
+//
 //     {
-//       "service": "allServices"
-//       "audit_log_configs": [
+//       "audit_configs": [
 //         {
-//           "log_type": "DATA_READ",
-//           "exempted_members": [
-//             "user:foo@gmail.com"
+//           "service": "allServices"
+//           "audit_log_configs": [
+//             {
+//               "log_type": "DATA_READ",
+//               "exempted_members": [
+//                 "user:foo@gmail.com"
+//               ]
+//             },
+//             {
+//               "log_type": "DATA_WRITE",
+//             },
+//             {
+//               "log_type": "ADMIN_READ",
+//             }
 //           ]
 //         },
 //         {
-//           "log_type": "DATA_WRITE",
-//         },
-//         {
-//           "log_type": "ADMIN_READ",
-//         }
-//       ]
-//     },
-//     {
-//       "service": "fooservice@googleapis.com"
-//       "audit_log_configs": [
-//         {
-//           "log_type": "DATA_READ",
-//         },
-//         {
-//           "log_type": "DATA_WRITE",
-//           "exempted_members": [
-//             "user:bar@gmail.com"
+//           "service": "fooservice.googleapis.com"
+//           "audit_log_configs": [
+//             {
+//               "log_type": "DATA_READ",
+//             },
+//             {
+//               "log_type": "DATA_WRITE",
+//               "exempted_members": [
+//                 "user:bar@gmail.com"
+//               ]
+//             }
 //           ]
 //         }
 //       ]
 //     }
-//   ]
-// }
+//
 // For fooservice, this policy enables DATA_READ, DATA_WRITE and
 // ADMIN_READ
 // logging. It also exempts foo@gmail.com from DATA_READ logging,

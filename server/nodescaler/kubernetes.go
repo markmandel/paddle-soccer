@@ -16,10 +16,11 @@ package nodescaler
 
 import (
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/fields"
-	"k8s.io/client-go/pkg/watch"
 )
 
 // nodeList is the set of current nodes that this
@@ -35,7 +36,7 @@ type nodeList struct {
 func (s *Server) newNodeList() (*nodeList, error) {
 	var result *nodeList
 
-	nodes, err := s.cs.CoreV1().Nodes().List(v1.ListOptions{LabelSelector: s.nodeSelector})
+	nodes, err := s.cs.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: s.nodeSelector})
 	if err != nil {
 		return result, errors.Wrap(err, "Could not get node list from Kubernetes")
 	}
@@ -83,7 +84,7 @@ type gameWatcher struct {
 func (s *Server) newGameWatcher() (*gameWatcher, error) {
 	g := &gameWatcher{event: make(chan bool)}
 
-	watcher, err := s.cs.CoreV1().Pods(api.NamespaceAll).Watch(v1.ListOptions{LabelSelector: "sessions=game"})
+	watcher, err := s.cs.CoreV1().Pods(api.NamespaceAll).Watch(metav1.ListOptions{LabelSelector: "sessions=game"})
 	if err != nil {
 		return g, errors.Wrapf(err, "Error watching pods for selector: %#v", s.nodeSelector)
 	}
@@ -146,7 +147,7 @@ func (s *Server) listNodePods(n v1.Node) (*v1.PodList, error) {
 		return nil, errors.Wrap(err, "Could not parse selector")
 	}
 
-	pods, err := s.cs.CoreV1().Pods(api.NamespaceAll).List(v1.ListOptions{FieldSelector: fs.String()})
+	pods, err := s.cs.CoreV1().Pods(api.NamespaceAll).List(metav1.ListOptions{FieldSelector: fs.String()})
 	return pods, errors.Wrapf(err, "Could not get pods for Node: %v", n.Name)
 }
 

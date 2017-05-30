@@ -23,12 +23,12 @@ import (
 	"github.com/markmandel/paddle-soccer/server/pkg/kube"
 	predis "github.com/markmandel/paddle-soccer/server/pkg/redis"
 	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/pkg/api/resource"
 )
 
 // Version is the current api version number
-const Version string = "sessions:0.4"
+const Version string = "sessions:0.1"
 
 // Server is the http server instance
 type Server struct {

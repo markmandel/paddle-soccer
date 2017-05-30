@@ -622,7 +622,9 @@ type AccessConfig struct {
 	// for access configs.
 	Kind string `json:"kind,omitempty"`
 
-	// Name: Name of this access configuration.
+	// Name: The name of this access configuration. The default and
+	// recommended name is External NAT but you can use any arbitrary string
+	// you would like. For example, My external IP or Network Access.
 	Name string `json:"name,omitempty"`
 
 	// NatIP: An external IP address associated with this instance. Specify
@@ -665,7 +667,6 @@ func (s *AccessConfig) MarshalJSON() ([]byte, error) {
 // Address: A reserved address resource.
 type Address struct {
 	// Address: The static external IP address represented by this resource.
-	// Only IPv4 is supported.
 	Address string `json:"address,omitempty"`
 
 	// CreationTimestamp: [Output Only] Creation timestamp in RFC3339 text
@@ -1630,27 +1631,22 @@ func (s *AutoscalingPolicyCpuUtilization) UnmarshalJSON(data []byte) error {
 // AutoscalingPolicyCustomMetricUtilization: Custom utilization metric
 // policy.
 type AutoscalingPolicyCustomMetricUtilization struct {
-	// Metric: The identifier of the Stackdriver Monitoring metric. The
-	// metric cannot have negative values and should be a utilization
+	// Metric: The identifier (type) of the Stackdriver Monitoring metric.
+	// The metric cannot have negative values and should be a utilization
 	// metric, which means that the number of virtual machines handling
-	// requests should increase or decrease proportionally to the metric.
-	// The metric must also have a label of
-	// compute.googleapis.com/resource_id with the value of the instance's
-	// unique ID, although this alone does not guarantee that the metric is
-	// valid.
+	// requests should increase or decrease proportionally to the
+	// metric.
 	//
-	// For example, the following is a valid
-	// metric:
-	// compute.googleapis.com/instance/network/received_bytes_count
-	// T
-	// he following is not a valid metric because it does not increase or
-	// decrease based on
-	// usage:
-	// compute.googleapis.com/instance/cpu/reserved_cores
+	// The metric must have a value type of INT64 or DOUBLE.
 	Metric string `json:"metric,omitempty"`
 
-	// UtilizationTarget: Target value of the metric which autoscaler should
-	// maintain. Must be a positive value.
+	// UtilizationTarget: The target value of the metric that autoscaler
+	// should maintain. This must be a positive value.
+	//
+	// For example, a good metric to use as a utilization_target is
+	// compute.googleapis.com/instance/network/received_bytes_count. The
+	// autoscaler will work to keep this value constant for each of the
+	// instances.
 	UtilizationTarget float64 `json:"utilizationTarget,omitempty"`
 
 	// UtilizationTargetType: Defines how target utilization value is
@@ -1818,8 +1814,8 @@ type Backend struct {
 	MaxRate int64 `json:"maxRate,omitempty"`
 
 	// MaxRatePerInstance: The max requests per second (RPS) that a single
-	// backend instance can handle.This is used to calculate the capacity of
-	// the group. Can be used in either balancing mode. For RATE mode,
+	// backend instance can handle. This is used to calculate the capacity
+	// of the group. Can be used in either balancing mode. For RATE mode,
 	// either maxRate or maxRatePerInstance must be set.
 	//
 	// This cannot be used for internal load balancing.
@@ -1996,6 +1992,9 @@ type BackendService struct {
 	// Backends: The list of backends that serve this BackendService.
 	Backends []*Backend `json:"backends,omitempty"`
 
+	// CdnPolicy: Cloud CDN configuration for this BackendService.
+	CdnPolicy *BackendServiceCdnPolicy `json:"cdnPolicy,omitempty"`
+
 	ConnectionDraining *ConnectionDraining `json:"connectionDraining,omitempty"`
 
 	// CreationTimestamp: [Output Only] Creation timestamp in RFC3339 text
@@ -2025,6 +2024,8 @@ type BackendService struct {
 	// For internal load balancing, a URL to a HealthCheck resource must be
 	// specified instead.
 	HealthChecks []string `json:"healthChecks,omitempty"`
+
+	Iap *BackendServiceIAP `json:"iap,omitempty"`
 
 	// Id: [Output Only] The unique identifier for the resource. This
 	// identifier is defined by the server.
@@ -2186,6 +2187,36 @@ func (s *BackendServiceAggregatedList) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// BackendServiceCdnPolicy: Message containing Cloud CDN configuration
+// for a backend service.
+type BackendServiceCdnPolicy struct {
+	// CacheKeyPolicy: The CacheKeyPolicy for this CdnPolicy.
+	CacheKeyPolicy *CacheKeyPolicy `json:"cacheKeyPolicy,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CacheKeyPolicy") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CacheKeyPolicy") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *BackendServiceCdnPolicy) MarshalJSON() ([]byte, error) {
+	type noMethod BackendServiceCdnPolicy
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 type BackendServiceGroupHealth struct {
 	HealthStatus []*HealthStatus `json:"healthStatus,omitempty"`
 
@@ -2216,6 +2247,41 @@ type BackendServiceGroupHealth struct {
 
 func (s *BackendServiceGroupHealth) MarshalJSON() ([]byte, error) {
 	type noMethod BackendServiceGroupHealth
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// BackendServiceIAP: Identity-Aware Proxy
+type BackendServiceIAP struct {
+	Enabled bool `json:"enabled,omitempty"`
+
+	Oauth2ClientId string `json:"oauth2ClientId,omitempty"`
+
+	Oauth2ClientSecret string `json:"oauth2ClientSecret,omitempty"`
+
+	// Oauth2ClientSecretSha256: [Output Only] SHA256 hash value for the
+	// field oauth2_client_secret above.
+	Oauth2ClientSecretSha256 string `json:"oauth2ClientSecretSha256,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Enabled") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Enabled") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *BackendServiceIAP) MarshalJSON() ([]byte, error) {
+	type noMethod BackendServiceIAP
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2425,6 +2491,59 @@ type CacheInvalidationRule struct {
 
 func (s *CacheInvalidationRule) MarshalJSON() ([]byte, error) {
 	type noMethod CacheInvalidationRule
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CacheKeyPolicy: Message containing what to include in the cache key
+// for a request for Cloud CDN.
+type CacheKeyPolicy struct {
+	// IncludeHost: If true, requests to different hosts will be cached
+	// separately.
+	IncludeHost bool `json:"includeHost,omitempty"`
+
+	// IncludeProtocol: If true, http and https requests will be cached
+	// separately.
+	IncludeProtocol bool `json:"includeProtocol,omitempty"`
+
+	// IncludeQueryString: If true, include query string parameters in the
+	// cache key according to query_string_whitelist and
+	// query_string_blacklist. If neither is set, the entire query string
+	// will be included. If false, the query string will be excluded from
+	// the cache key entirely.
+	IncludeQueryString bool `json:"includeQueryString,omitempty"`
+
+	// QueryStringBlacklist: Names of query string parameters to exclude in
+	// cache keys. All other parameters will be included. Either specify
+	// query_string_whitelist or query_string_blacklist, not both. '&' and
+	// '=' will be percent encoded and not treated as delimiters.
+	QueryStringBlacklist []string `json:"queryStringBlacklist,omitempty"`
+
+	// QueryStringWhitelist: Names of query string parameters to include in
+	// cache keys. All other parameters will be excluded. Either specify
+	// query_string_whitelist or query_string_blacklist, not both. '&' and
+	// '=' will be percent encoded and not treated as delimiters.
+	QueryStringWhitelist []string `json:"queryStringWhitelist,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "IncludeHost") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "IncludeHost") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *CacheKeyPolicy) MarshalJSON() ([]byte, error) {
+	type noMethod CacheKeyPolicy
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3382,7 +3501,7 @@ type Firewall struct {
 	// identifier is defined by the server.
 	Id uint64 `json:"id,omitempty,string"`
 
-	// Kind: [Output Ony] Type of the resource. Always compute#firewall for
+	// Kind: [Output Only] Type of the resource. Always compute#firewall for
 	// firewall rules.
 	Kind string `json:"kind,omitempty"`
 
@@ -3556,7 +3675,7 @@ func (s *FirewallList) MarshalJSON() ([]byte, error) {
 
 // ForwardingRule: A ForwardingRule resource. A ForwardingRule resource
 // specifies which pool of target virtual machines to forward a packet
-// to if it matches the given [IPAddress, IPProtocol, portRange] tuple.
+// to if it matches the given [IPAddress, IPProtocol, ports] tuple.
 type ForwardingRule struct {
 	// IPAddress: The IP address that this forwarding rule is serving on
 	// behalf of.
@@ -3642,21 +3761,31 @@ type ForwardingRule struct {
 	// this field is not specified, the default network will be used.
 	Network string `json:"network,omitempty"`
 
-	// PortRange: Applicable only when IPProtocol is TCP, UDP, or SCTP, only
-	// packets addressed to ports in the specified range will be forwarded
-	// to target. Forwarding rules with the same [IPAddress, IPProtocol]
-	// pair must have disjoint port ranges.
+	// PortRange: This field is used along with the target field for
+	// TargetHttpProxy, TargetHttpsProxy, TargetSslProxy, TargetTcpProxy,
+	// TargetVpnGateway, TargetPool, TargetInstance.
 	//
-	// This field is not used for internal load balancing.
+	// Applicable only when IPProtocol is TCP, UDP, or SCTP, only packets
+	// addressed to ports in the specified range will be forwarded to
+	// target. Forwarding rules with the same [IPAddress, IPProtocol] pair
+	// must have disjoint port ranges.
+	//
+	// Some types of forwarding target have constraints on the acceptable
+	// ports:
+	// - TargetHttpProxy: 80, 8080
+	// - TargetHttpsProxy: 443
+	// - TargetSslProxy: 443
+	// - TargetVpnGateway: 500, 4500
+	// -
 	PortRange string `json:"portRange,omitempty"`
 
-	// Ports: This field is not used for external load balancing.
+	// Ports: This field is used along with the backend_service field for
+	// internal load balancing.
 	//
 	// When the load balancing scheme is INTERNAL, a single port or a comma
 	// separated list of ports can be configured. Only packets addressed to
 	// these ports will be forwarded to the backends configured with this
-	// forwarding rule. If the port list is not provided then all ports are
-	// allowed to pass through.
+	// forwarding rule.
 	//
 	// You may specify a maximum of up to 5 ports.
 	Ports []string `json:"ports,omitempty"`
@@ -3684,9 +3813,7 @@ type ForwardingRule struct {
 	// traffic. For regional forwarding rules, this target must live in the
 	// same region as the forwarding rule. For global forwarding rules, this
 	// target must be a global load balancing resource. The forwarded
-	// traffic must be of a type appropriate to the target object. For
-	// example, TargetHttpProxy requires HTTP traffic, and TargetHttpsProxy
-	// requires HTTPS traffic.
+	// traffic must be of a type appropriate to the target object.
 	//
 	// This field is not used for internal load balancing.
 	Target string `json:"target,omitempty"`
@@ -4654,11 +4781,11 @@ type Image struct {
 
 	// GuestOsFeatures: A list of features to enable on the guest OS.
 	// Applicable for bootable images only. Currently, only one feature can
-	// be enabled, VIRTIO_SCSCI_MULTIQUEUE, which allows each virtual CPU to
+	// be enabled, VIRTIO_SCSI_MULTIQUEUE, which allows each virtual CPU to
 	// have its own queue. For Windows images, you can only enable
-	// VIRTIO_SCSCI_MULTIQUEUE on images with driver version 1.2.0.1621 or
+	// VIRTIO_SCSI_MULTIQUEUE on images with driver version 1.2.0.1621 or
 	// higher. Linux images with kernel versions 3.17 and higher will
-	// support VIRTIO_SCSCI_MULTIQUEUE.
+	// support VIRTIO_SCSI_MULTIQUEUE.
 	//
 	// For new Windows images, the server might also populate this field
 	// with the value WINDOWS, to indicate that this is a Windows image.
@@ -4941,7 +5068,7 @@ type Instance struct {
 	// interface is supported per instance.
 	NetworkInterfaces []*NetworkInterface `json:"networkInterfaces,omitempty"`
 
-	// Scheduling: Scheduling options for this instance.
+	// Scheduling: Sets the scheduling options for this instance.
 	Scheduling *Scheduling `json:"scheduling,omitempty"`
 
 	// SelfLink: [Output Only] Server-defined URL for this resource.
@@ -5536,8 +5663,9 @@ func (s *InstanceGroupManagerList) MarshalJSON() ([]byte, error) {
 }
 
 type InstanceGroupManagersAbandonInstancesRequest struct {
-	// Instances: The URL for one or more instances to abandon from the
-	// managed instance group.
+	// Instances: The URLs of one or more instances to abandon. This can be
+	// a full URL or a partial URL, such as
+	// zones/[ZONE]/instances/[INSTANCE_NAME].
 	Instances []string `json:"instances,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Instances") to
@@ -5564,8 +5692,9 @@ func (s *InstanceGroupManagersAbandonInstancesRequest) MarshalJSON() ([]byte, er
 }
 
 type InstanceGroupManagersDeleteInstancesRequest struct {
-	// Instances: The list of instances to delete from this managed instance
-	// group. Specify one or more instance URLs.
+	// Instances: The URLs of one or more instances to delete. This can be a
+	// full URL or a partial URL, such as
+	// zones/[ZONE]/instances/[INSTANCE_NAME].
 	Instances []string `json:"instances,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Instances") to
@@ -5625,7 +5754,9 @@ func (s *InstanceGroupManagersListManagedInstancesResponse) MarshalJSON() ([]byt
 }
 
 type InstanceGroupManagersRecreateInstancesRequest struct {
-	// Instances: The URL for one or more instances to recreate.
+	// Instances: The URLs of one or more instances to recreate. This can be
+	// a full URL or a partial URL, such as
+	// zones/[ZONE]/instances/[INSTANCE_NAME].
 	Instances []string `json:"instances,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Instances") to
@@ -8592,7 +8723,9 @@ func (s *RegionInstanceGroupManagerList) MarshalJSON() ([]byte, error) {
 }
 
 type RegionInstanceGroupManagersAbandonInstancesRequest struct {
-	// Instances: The names of one or more instances to abandon.
+	// Instances: The URLs of one or more instances to abandon. This can be
+	// a full URL or a partial URL, such as
+	// zones/[ZONE]/instances/[INSTANCE_NAME].
 	Instances []string `json:"instances,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Instances") to
@@ -8619,7 +8752,9 @@ func (s *RegionInstanceGroupManagersAbandonInstancesRequest) MarshalJSON() ([]by
 }
 
 type RegionInstanceGroupManagersDeleteInstancesRequest struct {
-	// Instances: The names of one or more instances to delete.
+	// Instances: The URLs of one or more instances to delete. This can be a
+	// full URL or a partial URL, such as
+	// zones/[ZONE]/instances/[INSTANCE_NAME].
 	Instances []string `json:"instances,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Instances") to
@@ -8678,7 +8813,9 @@ func (s *RegionInstanceGroupManagersListInstancesResponse) MarshalJSON() ([]byte
 }
 
 type RegionInstanceGroupManagersRecreateRequest struct {
-	// Instances: The URL for one or more instances to recreate.
+	// Instances: The URLs of one or more instances to recreate. This can be
+	// a full URL or a partial URL, such as
+	// zones/[ZONE]/instances/[INSTANCE_NAME].
 	Instances []string `json:"instances,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Instances") to
@@ -9450,9 +9587,10 @@ type RouterInterface struct {
 	// interface.
 	IpRange string `json:"ipRange,omitempty"`
 
-	// LinkedVpnTunnel: URI of linked VPN tunnel. It must be in the same
+	// LinkedVpnTunnel: URI of the linked VPN tunnel. It must be in the same
 	// region as the router. Each interface can have at most one linked
-	// resource.
+	// resource and it could either be a VPN Tunnel or an interconnect
+	// attachment.
 	LinkedVpnTunnel string `json:"linkedVpnTunnel,omitempty"`
 
 	// Name: Name of this interface entry. The name must be 1-63 characters
@@ -9536,6 +9674,9 @@ func (s *RouterList) MarshalJSON() ([]byte, error) {
 type RouterStatus struct {
 	// BestRoutes: Best routes for this router's network.
 	BestRoutes []*Route `json:"bestRoutes,omitempty"`
+
+	// BestRoutesForRouter: Best routes learned by this router.
+	BestRoutesForRouter []*Route `json:"bestRoutesForRouter,omitempty"`
 
 	BgpPeerStatus []*RouterStatusBgpPeerStatus `json:"bgpPeerStatus,omitempty"`
 
@@ -9876,7 +10017,10 @@ type Scheduling struct {
 	// terminated by a user). You can only set the automatic restart option
 	// for standard instances. Preemptible instances cannot be automatically
 	// restarted.
-	AutomaticRestart bool `json:"automaticRestart,omitempty"`
+	//
+	// By default, this is set to true so an instance is automatically
+	// restarted if it is terminated by Compute Engine.
+	AutomaticRestart *bool `json:"automaticRestart,omitempty"`
 
 	// OnHostMaintenance: Defines the maintenance behavior for this
 	// instance. For standard instances, the default behavior is MIGRATE.
@@ -9889,7 +10033,9 @@ type Scheduling struct {
 	//   "TERMINATE"
 	OnHostMaintenance string `json:"onHostMaintenance,omitempty"`
 
-	// Preemptible: Whether the instance is preemptible.
+	// Preemptible: Defines whether the instance is preemptible. This can
+	// only be set during instance creation, it cannot be set or changed
+	// after the instance has been created.
 	Preemptible bool `json:"preemptible,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "AutomaticRestart") to
@@ -10333,6 +10479,10 @@ type Subnetwork struct {
 	// networks that are in the distributed mode can have subnetworks.
 	Network string `json:"network,omitempty"`
 
+	// PrivateIpGoogleAccess: Whether the VMs in this subnet can access
+	// Google services without assigned external IP addresses.
+	PrivateIpGoogleAccess bool `json:"privateIpGoogleAccess,omitempty"`
+
 	// Region: URL of the region where the Subnetwork resides.
 	Region string `json:"region,omitempty"`
 
@@ -10622,6 +10772,34 @@ type SubnetworksScopedListWarningData struct {
 
 func (s *SubnetworksScopedListWarningData) MarshalJSON() ([]byte, error) {
 	type noMethod SubnetworksScopedListWarningData
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type SubnetworksSetPrivateIpGoogleAccessRequest struct {
+	PrivateIpGoogleAccess bool `json:"privateIpGoogleAccess,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "PrivateIpGoogleAccess") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "PrivateIpGoogleAccess") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SubnetworksSetPrivateIpGoogleAccessRequest) MarshalJSON() ([]byte, error) {
+	type noMethod SubnetworksSetPrivateIpGoogleAccessRequest
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -15152,23 +15330,29 @@ func (c *AutoscalersListCall) Pages(ctx context.Context, f func(*AutoscalerList)
 // method id "compute.autoscalers.patch":
 
 type AutoscalersPatchCall struct {
-	s           *Service
-	project     string
-	zone        string
-	autoscaler2 *Autoscaler
-	urlParams_  gensupport.URLParams
-	ctx_        context.Context
-	header_     http.Header
+	s          *Service
+	project    string
+	zone       string
+	autoscaler *Autoscaler
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
 }
 
 // Patch: Updates an autoscaler in the specified project using the data
 // included in the request. This method supports patch semantics.
-func (r *AutoscalersService) Patch(project string, zone string, autoscaler string, autoscaler2 *Autoscaler) *AutoscalersPatchCall {
+func (r *AutoscalersService) Patch(project string, zone string, autoscaler *Autoscaler) *AutoscalersPatchCall {
 	c := &AutoscalersPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
 	c.zone = zone
+	c.autoscaler = autoscaler
+	return c
+}
+
+// Autoscaler sets the optional parameter "autoscaler": Name of the
+// autoscaler to patch.
+func (c *AutoscalersPatchCall) Autoscaler(autoscaler string) *AutoscalersPatchCall {
 	c.urlParams_.Set("autoscaler", autoscaler)
-	c.autoscaler2 = autoscaler2
 	return c
 }
 
@@ -15204,7 +15388,7 @@ func (c *AutoscalersPatchCall) doRequest(alt string) (*http.Response, error) {
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.autoscaler2)
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.autoscaler)
 	if err != nil {
 		return nil, err
 	}
@@ -15264,15 +15448,13 @@ func (c *AutoscalersPatchCall) Do(opts ...googleapi.CallOption) (*Operation, err
 	//   "id": "compute.autoscalers.patch",
 	//   "parameterOrder": [
 	//     "project",
-	//     "zone",
-	//     "autoscaler"
+	//     "zone"
 	//   ],
 	//   "parameters": {
 	//     "autoscaler": {
-	//       "description": "Name of the autoscaler to update.",
+	//       "description": "Name of the autoscaler to patch.",
 	//       "location": "query",
 	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
-	//       "required": true,
 	//       "type": "string"
 	//     },
 	//     "project": {
@@ -15299,7 +15481,8 @@ func (c *AutoscalersPatchCall) Do(opts ...googleapi.CallOption) (*Operation, err
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/compute"
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 
@@ -16260,7 +16443,7 @@ func (c *BackendBucketsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, 
 	//   ],
 	//   "parameters": {
 	//     "backendBucket": {
-	//       "description": "Name of the BackendBucket resource to update.",
+	//       "description": "Name of the BackendBucket resource to patch.",
 	//       "location": "path",
 	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
 	//       "required": true,
@@ -16283,7 +16466,8 @@ func (c *BackendBucketsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, 
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/compute"
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 
@@ -17532,7 +17716,7 @@ type BackendServicesPatchCall struct {
 	header_        http.Header
 }
 
-// Patch: Updates the specified BackendService resource with the data
+// Patch: Patches the specified BackendService resource with the data
 // included in the request. There are several restrictions and
 // guidelines to keep in mind when updating a backend service. Read
 // Restrictions and Guidelines for more information. This method
@@ -17633,7 +17817,7 @@ func (c *BackendServicesPatchCall) Do(opts ...googleapi.CallOption) (*Operation,
 	}
 	return ret, nil
 	// {
-	//   "description": "Updates the specified BackendService resource with the data included in the request. There are several restrictions and guidelines to keep in mind when updating a backend service. Read  Restrictions and Guidelines for more information. This method supports patch semantics.",
+	//   "description": "Patches the specified BackendService resource with the data included in the request. There are several restrictions and guidelines to keep in mind when updating a backend service. Read  Restrictions and Guidelines for more information. This method supports patch semantics.",
 	//   "httpMethod": "PATCH",
 	//   "id": "compute.backendServices.patch",
 	//   "parameterOrder": [
@@ -17642,7 +17826,7 @@ func (c *BackendServicesPatchCall) Do(opts ...googleapi.CallOption) (*Operation,
 	//   ],
 	//   "parameters": {
 	//     "backendService": {
-	//       "description": "Name of the BackendService resource to update.",
+	//       "description": "Name of the BackendService resource to patch.",
 	//       "location": "path",
 	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
 	//       "required": true,
@@ -17665,7 +17849,8 @@ func (c *BackendServicesPatchCall) Do(opts ...googleapi.CallOption) (*Operation,
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/compute"
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 
@@ -20516,7 +20701,9 @@ type FirewallsPatchCall struct {
 }
 
 // Patch: Updates the specified firewall rule with the data included in
-// the request. This method supports patch semantics.
+// the request. Using PUT method, can only update following fields of
+// firewall rule: allowed, description, sourceRanges, sourceTags,
+// targetTags. This method supports patch semantics.
 // For details, see https://cloud.google.com/compute/docs/reference/latest/firewalls/patch
 func (r *FirewallsService) Patch(project string, firewall string, firewall2 *Firewall) *FirewallsPatchCall {
 	c := &FirewallsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -20613,7 +20800,7 @@ func (c *FirewallsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error
 	}
 	return ret, nil
 	// {
-	//   "description": "Updates the specified firewall rule with the data included in the request. This method supports patch semantics.",
+	//   "description": "Updates the specified firewall rule with the data included in the request. Using PUT method, can only update following fields of firewall rule: allowed, description, sourceRanges, sourceTags, targetTags. This method supports patch semantics.",
 	//   "httpMethod": "PATCH",
 	//   "id": "compute.firewalls.patch",
 	//   "parameterOrder": [
@@ -20664,7 +20851,9 @@ type FirewallsUpdateCall struct {
 }
 
 // Update: Updates the specified firewall rule with the data included in
-// the request.
+// the request. Using PUT method, can only update following fields of
+// firewall rule: allowed, description, sourceRanges, sourceTags,
+// targetTags.
 // For details, see https://cloud.google.com/compute/docs/reference/latest/firewalls/update
 func (r *FirewallsService) Update(project string, firewall string, firewall2 *Firewall) *FirewallsUpdateCall {
 	c := &FirewallsUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -20761,7 +20950,7 @@ func (c *FirewallsUpdateCall) Do(opts ...googleapi.CallOption) (*Operation, erro
 	}
 	return ret, nil
 	// {
-	//   "description": "Updates the specified firewall rule with the data included in the request.",
+	//   "description": "Updates the specified firewall rule with the data included in the request. Using PUT method, can only update following fields of firewall rule: allowed, description, sourceRanges, sourceTags, targetTags.",
 	//   "httpMethod": "PUT",
 	//   "id": "compute.firewalls.update",
 	//   "parameterOrder": [
@@ -22626,7 +22815,7 @@ type GlobalForwardingRulesDeleteCall struct {
 	header_        http.Header
 }
 
-// Delete: Deletes the specified ForwardingRule resource.
+// Delete: Deletes the specified GlobalForwardingRule resource.
 // For details, see https://cloud.google.com/compute/docs/reference/latest/globalForwardingRules/delete
 func (r *GlobalForwardingRulesService) Delete(project string, forwardingRule string) *GlobalForwardingRulesDeleteCall {
 	c := &GlobalForwardingRulesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -22717,7 +22906,7 @@ func (c *GlobalForwardingRulesDeleteCall) Do(opts ...googleapi.CallOption) (*Ope
 	}
 	return ret, nil
 	// {
-	//   "description": "Deletes the specified ForwardingRule resource.",
+	//   "description": "Deletes the specified GlobalForwardingRule resource.",
 	//   "httpMethod": "DELETE",
 	//   "id": "compute.globalForwardingRules.delete",
 	//   "parameterOrder": [
@@ -22764,8 +22953,8 @@ type GlobalForwardingRulesGetCall struct {
 	header_        http.Header
 }
 
-// Get: Returns the specified ForwardingRule resource. Get a list of
-// available forwarding rules by making a list() request.
+// Get: Returns the specified GlobalForwardingRule resource. Get a list
+// of available forwarding rules by making a list() request.
 // For details, see https://cloud.google.com/compute/docs/reference/latest/globalForwardingRules/get
 func (r *GlobalForwardingRulesService) Get(project string, forwardingRule string) *GlobalForwardingRulesGetCall {
 	c := &GlobalForwardingRulesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -22869,7 +23058,7 @@ func (c *GlobalForwardingRulesGetCall) Do(opts ...googleapi.CallOption) (*Forwar
 	}
 	return ret, nil
 	// {
-	//   "description": "Returns the specified ForwardingRule resource. Get a list of available forwarding rules by making a list() request.",
+	//   "description": "Returns the specified GlobalForwardingRule resource. Get a list of available forwarding rules by making a list() request.",
 	//   "httpMethod": "GET",
 	//   "id": "compute.globalForwardingRules.get",
 	//   "parameterOrder": [
@@ -22916,8 +23105,8 @@ type GlobalForwardingRulesInsertCall struct {
 	header_        http.Header
 }
 
-// Insert: Creates a ForwardingRule resource in the specified project
-// and region using the data included in the request.
+// Insert: Creates a GlobalForwardingRule resource in the specified
+// project using the data included in the request.
 // For details, see https://cloud.google.com/compute/docs/reference/latest/globalForwardingRules/insert
 func (r *GlobalForwardingRulesService) Insert(project string, forwardingrule *ForwardingRule) *GlobalForwardingRulesInsertCall {
 	c := &GlobalForwardingRulesInsertCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -23012,7 +23201,7 @@ func (c *GlobalForwardingRulesInsertCall) Do(opts ...googleapi.CallOption) (*Ope
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a ForwardingRule resource in the specified project and region using the data included in the request.",
+	//   "description": "Creates a GlobalForwardingRule resource in the specified project using the data included in the request.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.globalForwardingRules.insert",
 	//   "parameterOrder": [
@@ -23053,8 +23242,8 @@ type GlobalForwardingRulesListCall struct {
 	header_      http.Header
 }
 
-// List: Retrieves a list of ForwardingRule resources available to the
-// specified project.
+// List: Retrieves a list of GlobalForwardingRule resources available to
+// the specified project.
 // For details, see https://cloud.google.com/compute/docs/reference/latest/globalForwardingRules/list
 func (r *GlobalForwardingRulesService) List(project string) *GlobalForwardingRulesListCall {
 	c := &GlobalForwardingRulesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -23224,7 +23413,7 @@ func (c *GlobalForwardingRulesListCall) Do(opts ...googleapi.CallOption) (*Forwa
 	}
 	return ret, nil
 	// {
-	//   "description": "Retrieves a list of ForwardingRule resources available to the specified project.",
+	//   "description": "Retrieves a list of GlobalForwardingRule resources available to the specified project.",
 	//   "httpMethod": "GET",
 	//   "id": "compute.globalForwardingRules.list",
 	//   "parameterOrder": [
@@ -23308,8 +23497,8 @@ type GlobalForwardingRulesSetTargetCall struct {
 	header_         http.Header
 }
 
-// SetTarget: Changes target URL for forwarding rule. The new target
-// should be of the same type as the old target.
+// SetTarget: Changes target URL for the GlobalForwardingRule resource.
+// The new target should be of the same type as the old target.
 // For details, see https://cloud.google.com/compute/docs/reference/latest/globalForwardingRules/setTarget
 func (r *GlobalForwardingRulesService) SetTarget(project string, forwardingRule string, targetreference *TargetReference) *GlobalForwardingRulesSetTargetCall {
 	c := &GlobalForwardingRulesSetTargetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -23406,7 +23595,7 @@ func (c *GlobalForwardingRulesSetTargetCall) Do(opts ...googleapi.CallOption) (*
 	}
 	return ret, nil
 	// {
-	//   "description": "Changes target URL for forwarding rule. The new target should be of the same type as the old target.",
+	//   "description": "Changes target URL for the GlobalForwardingRule resource. The new target should be of the same type as the old target.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.globalForwardingRules.setTarget",
 	//   "parameterOrder": [
@@ -25009,7 +25198,7 @@ func (c *HealthChecksPatchCall) Do(opts ...googleapi.CallOption) (*Operation, er
 	//   ],
 	//   "parameters": {
 	//     "healthCheck": {
-	//       "description": "Name of the HealthCheck resource to update.",
+	//       "description": "Name of the HealthCheck resource to patch.",
 	//       "location": "path",
 	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
 	//       "required": true,
@@ -25032,7 +25221,8 @@ func (c *HealthChecksPatchCall) Do(opts ...googleapi.CallOption) (*Operation, er
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/compute"
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 
@@ -25986,7 +26176,7 @@ func (c *HttpHealthChecksPatchCall) Do(opts ...googleapi.CallOption) (*Operation
 	//   ],
 	//   "parameters": {
 	//     "httpHealthCheck": {
-	//       "description": "Name of the HttpHealthCheck resource to update.",
+	//       "description": "Name of the HttpHealthCheck resource to patch.",
 	//       "location": "path",
 	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
 	//       "required": true,
@@ -26009,7 +26199,8 @@ func (c *HttpHealthChecksPatchCall) Do(opts ...googleapi.CallOption) (*Operation
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/compute"
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 
@@ -26959,7 +27150,7 @@ func (c *HttpsHealthChecksPatchCall) Do(opts ...googleapi.CallOption) (*Operatio
 	//   ],
 	//   "parameters": {
 	//     "httpsHealthCheck": {
-	//       "description": "Name of the HttpsHealthCheck resource to update.",
+	//       "description": "Name of the HttpsHealthCheck resource to patch.",
 	//       "location": "path",
 	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
 	//       "required": true,
@@ -26982,7 +27173,8 @@ func (c *HttpsHealthChecksPatchCall) Do(opts ...googleapi.CallOption) (*Operatio
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/compute"
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 
@@ -28148,6 +28340,9 @@ type InstanceGroupManagersAbandonInstancesCall struct {
 // DONE when the action is scheduled even if the instances have not yet
 // been removed from the group. You must separately verify the status of
 // the abandoning action with the listmanagedinstances method.
+//
+// You can specify a maximum of 1000 instances with this method per
+// request.
 func (r *InstanceGroupManagersService) AbandonInstances(project string, zone string, instanceGroupManager string, instancegroupmanagersabandoninstancesrequest *InstanceGroupManagersAbandonInstancesRequest) *InstanceGroupManagersAbandonInstancesCall {
 	c := &InstanceGroupManagersAbandonInstancesCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -28245,7 +28440,7 @@ func (c *InstanceGroupManagersAbandonInstancesCall) Do(opts ...googleapi.CallOpt
 	}
 	return ret, nil
 	// {
-	//   "description": "Schedules a group action to remove the specified instances from the managed instance group. Abandoning an instance does not delete the instance, but it does remove the instance from any target pools that are applied by the managed instance group. This method reduces the targetSize of the managed instance group by the number of instances that you abandon. This operation is marked as DONE when the action is scheduled even if the instances have not yet been removed from the group. You must separately verify the status of the abandoning action with the listmanagedinstances method.",
+	//   "description": "Schedules a group action to remove the specified instances from the managed instance group. Abandoning an instance does not delete the instance, but it does remove the instance from any target pools that are applied by the managed instance group. This method reduces the targetSize of the managed instance group by the number of instances that you abandon. This operation is marked as DONE when the action is scheduled even if the instances have not yet been removed from the group. You must separately verify the status of the abandoning action with the listmanagedinstances method.\n\nYou can specify a maximum of 1000 instances with this method per request.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.instanceGroupManagers.abandonInstances",
 	//   "parameterOrder": [
@@ -28712,6 +28907,9 @@ type InstanceGroupManagersDeleteInstancesCall struct {
 // when the action is scheduled even if the instances are still being
 // deleted. You must separately verify the status of the deleting action
 // with the listmanagedinstances method.
+//
+// You can specify a maximum of 1000 instances with this method per
+// request.
 func (r *InstanceGroupManagersService) DeleteInstances(project string, zone string, instanceGroupManager string, instancegroupmanagersdeleteinstancesrequest *InstanceGroupManagersDeleteInstancesRequest) *InstanceGroupManagersDeleteInstancesCall {
 	c := &InstanceGroupManagersDeleteInstancesCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -28809,7 +29007,7 @@ func (c *InstanceGroupManagersDeleteInstancesCall) Do(opts ...googleapi.CallOpti
 	}
 	return ret, nil
 	// {
-	//   "description": "Schedules a group action to delete the specified instances in the managed instance group. The instances are also removed from any target pools of which they were a member. This method reduces the targetSize of the managed instance group by the number of instances that you delete. This operation is marked as DONE when the action is scheduled even if the instances are still being deleted. You must separately verify the status of the deleting action with the listmanagedinstances method.",
+	//   "description": "Schedules a group action to delete the specified instances in the managed instance group. The instances are also removed from any target pools of which they were a member. This method reduces the targetSize of the managed instance group by the number of instances that you delete. This operation is marked as DONE when the action is scheduled even if the instances are still being deleted. You must separately verify the status of the deleting action with the listmanagedinstances method.\n\nYou can specify a maximum of 1000 instances with this method per request.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.instanceGroupManagers.deleteInstances",
 	//   "parameterOrder": [
@@ -29034,6 +29232,8 @@ type InstanceGroupManagersInsertCall struct {
 // created even if the instances in the group have not yet been created.
 // You must separately verify the status of the individual instances
 // with the listmanagedinstances method.
+//
+// A managed instance group can have up to 1000 VM instances per group.
 func (r *InstanceGroupManagersService) Insert(project string, zone string, instancegroupmanager *InstanceGroupManager) *InstanceGroupManagersInsertCall {
 	c := &InstanceGroupManagersInsertCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -29129,7 +29329,7 @@ func (c *InstanceGroupManagersInsertCall) Do(opts ...googleapi.CallOption) (*Ope
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a managed instance group using the information that you specify in the request. After the group is created, it schedules an action to create instances in the group using the specified instance template. This operation is marked as DONE when the group is created even if the instances in the group have not yet been created. You must separately verify the status of the individual instances with the listmanagedinstances method.",
+	//   "description": "Creates a managed instance group using the information that you specify in the request. After the group is created, it schedules an action to create instances in the group using the specified instance template. This operation is marked as DONE when the group is created even if the instances in the group have not yet been created. You must separately verify the status of the individual instances with the listmanagedinstances method.\n\nA managed instance group can have up to 1000 VM instances per group.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.instanceGroupManagers.insert",
 	//   "parameterOrder": [
@@ -29645,6 +29845,9 @@ type InstanceGroupManagersRecreateInstancesCall struct {
 // scheduled even if the instances have not yet been recreated. You must
 // separately verify the status of the recreating action with the
 // listmanagedinstances method.
+//
+// You can specify a maximum of 1000 instances with this method per
+// request.
 func (r *InstanceGroupManagersService) RecreateInstances(project string, zone string, instanceGroupManager string, instancegroupmanagersrecreateinstancesrequest *InstanceGroupManagersRecreateInstancesRequest) *InstanceGroupManagersRecreateInstancesCall {
 	c := &InstanceGroupManagersRecreateInstancesCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -29742,7 +29945,7 @@ func (c *InstanceGroupManagersRecreateInstancesCall) Do(opts ...googleapi.CallOp
 	}
 	return ret, nil
 	// {
-	//   "description": "Schedules a group action to recreate the specified instances in the managed instance group. The instances are deleted and recreated using the current instance template for the managed instance group. This operation is marked as DONE when the action is scheduled even if the instances have not yet been recreated. You must separately verify the status of the recreating action with the listmanagedinstances method.",
+	//   "description": "Schedules a group action to recreate the specified instances in the managed instance group. The instances are deleted and recreated using the current instance template for the managed instance group. This operation is marked as DONE when the action is scheduled even if the instances have not yet been recreated. You must separately verify the status of the recreating action with the listmanagedinstances method.\n\nYou can specify a maximum of 1000 instances with this method per request.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.instanceGroupManagers.recreateInstances",
 	//   "parameterOrder": [
@@ -33092,7 +33295,10 @@ type InstancesAttachDiskCall struct {
 	header_      http.Header
 }
 
-// AttachDisk: Attaches a Disk resource to an instance.
+// AttachDisk: Attaches an existing Disk resource to an instance. You
+// must first create the disk before you can attach it. It is not
+// possible to create and attach a disk at the same time. For more
+// information, read Adding a persistent disk to your instance.
 // For details, see https://cloud.google.com/compute/docs/reference/latest/instances/attachDisk
 func (r *InstancesService) AttachDisk(project string, zone string, instance string, attacheddisk *AttachedDisk) *InstancesAttachDiskCall {
 	c := &InstancesAttachDiskCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -33191,7 +33397,7 @@ func (c *InstancesAttachDiskCall) Do(opts ...googleapi.CallOption) (*Operation, 
 	}
 	return ret, nil
 	// {
-	//   "description": "Attaches a Disk resource to an instance.",
+	//   "description": "Attaches an existing Disk resource to an instance. You must first create the disk before you can attach it. It is not possible to create and attach a disk at the same time. For more information, read Adding a persistent disk to your instance.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.instances.attachDisk",
 	//   "parameterOrder": [
@@ -34493,7 +34699,8 @@ type InstancesResetCall struct {
 	header_    http.Header
 }
 
-// Reset: Performs a hard reset on the instance.
+// Reset: Performs a reset on the instance. For more information, see
+// Resetting an instance.
 // For details, see https://cloud.google.com/compute/docs/reference/latest/instances/reset
 func (r *InstancesService) Reset(project string, zone string, instance string) *InstancesResetCall {
 	c := &InstancesResetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -34586,7 +34793,7 @@ func (c *InstancesResetCall) Do(opts ...googleapi.CallOption) (*Operation, error
 	}
 	return ret, nil
 	// {
-	//   "description": "Performs a hard reset on the instance.",
+	//   "description": "Performs a reset on the instance. For more information, see Resetting an instance.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.instances.reset",
 	//   "parameterOrder": [
@@ -39118,23 +39325,29 @@ func (c *RegionAutoscalersListCall) Pages(ctx context.Context, f func(*RegionAut
 // method id "compute.regionAutoscalers.patch":
 
 type RegionAutoscalersPatchCall struct {
-	s           *Service
-	project     string
-	region      string
-	autoscaler2 *Autoscaler
-	urlParams_  gensupport.URLParams
-	ctx_        context.Context
-	header_     http.Header
+	s          *Service
+	project    string
+	region     string
+	autoscaler *Autoscaler
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
 }
 
 // Patch: Updates an autoscaler in the specified project using the data
 // included in the request. This method supports patch semantics.
-func (r *RegionAutoscalersService) Patch(project string, region string, autoscaler string, autoscaler2 *Autoscaler) *RegionAutoscalersPatchCall {
+func (r *RegionAutoscalersService) Patch(project string, region string, autoscaler *Autoscaler) *RegionAutoscalersPatchCall {
 	c := &RegionAutoscalersPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
 	c.region = region
+	c.autoscaler = autoscaler
+	return c
+}
+
+// Autoscaler sets the optional parameter "autoscaler": Name of the
+// autoscaler to patch.
+func (c *RegionAutoscalersPatchCall) Autoscaler(autoscaler string) *RegionAutoscalersPatchCall {
 	c.urlParams_.Set("autoscaler", autoscaler)
-	c.autoscaler2 = autoscaler2
 	return c
 }
 
@@ -39170,7 +39383,7 @@ func (c *RegionAutoscalersPatchCall) doRequest(alt string) (*http.Response, erro
 	}
 	reqHeaders.Set("User-Agent", c.s.userAgent())
 	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.autoscaler2)
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.autoscaler)
 	if err != nil {
 		return nil, err
 	}
@@ -39230,15 +39443,13 @@ func (c *RegionAutoscalersPatchCall) Do(opts ...googleapi.CallOption) (*Operatio
 	//   "id": "compute.regionAutoscalers.patch",
 	//   "parameterOrder": [
 	//     "project",
-	//     "region",
-	//     "autoscaler"
+	//     "region"
 	//   ],
 	//   "parameters": {
 	//     "autoscaler": {
-	//       "description": "Name of the autoscaler to update.",
+	//       "description": "Name of the autoscaler to patch.",
 	//       "location": "query",
 	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
-	//       "required": true,
 	//       "type": "string"
 	//     },
 	//     "project": {
@@ -39265,7 +39476,8 @@ func (c *RegionAutoscalersPatchCall) Do(opts ...googleapi.CallOption) (*Operatio
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/compute"
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 
@@ -40437,7 +40649,7 @@ func (c *RegionBackendServicesPatchCall) Do(opts ...googleapi.CallOption) (*Oper
 	//   ],
 	//   "parameters": {
 	//     "backendService": {
-	//       "description": "Name of the BackendService resource to update.",
+	//       "description": "Name of the BackendService resource to patch.",
 	//       "location": "path",
 	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
 	//       "required": true,
@@ -40467,7 +40679,8 @@ func (c *RegionBackendServicesPatchCall) Do(opts ...googleapi.CallOption) (*Oper
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/compute"
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 
@@ -40655,6 +40868,9 @@ type RegionInstanceGroupManagersAbandonInstancesCall struct {
 // DONE when the action is scheduled even if the instances have not yet
 // been removed from the group. You must separately verify the status of
 // the abandoning action with the listmanagedinstances method.
+//
+// You can specify a maximum of 1000 instances with this method per
+// request.
 func (r *RegionInstanceGroupManagersService) AbandonInstances(project string, region string, instanceGroupManager string, regioninstancegroupmanagersabandoninstancesrequest *RegionInstanceGroupManagersAbandonInstancesRequest) *RegionInstanceGroupManagersAbandonInstancesCall {
 	c := &RegionInstanceGroupManagersAbandonInstancesCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -40752,7 +40968,7 @@ func (c *RegionInstanceGroupManagersAbandonInstancesCall) Do(opts ...googleapi.C
 	}
 	return ret, nil
 	// {
-	//   "description": "Schedules a group action to remove the specified instances from the managed instance group. Abandoning an instance does not delete the instance, but it does remove the instance from any target pools that are applied by the managed instance group. This method reduces the targetSize of the managed instance group by the number of instances that you abandon. This operation is marked as DONE when the action is scheduled even if the instances have not yet been removed from the group. You must separately verify the status of the abandoning action with the listmanagedinstances method.",
+	//   "description": "Schedules a group action to remove the specified instances from the managed instance group. Abandoning an instance does not delete the instance, but it does remove the instance from any target pools that are applied by the managed instance group. This method reduces the targetSize of the managed instance group by the number of instances that you abandon. This operation is marked as DONE when the action is scheduled even if the instances have not yet been removed from the group. You must separately verify the status of the abandoning action with the listmanagedinstances method.\n\nYou can specify a maximum of 1000 instances with this method per request.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.regionInstanceGroupManagers.abandonInstances",
 	//   "parameterOrder": [
@@ -40963,6 +41179,9 @@ type RegionInstanceGroupManagersDeleteInstancesCall struct {
 // when the action is scheduled even if the instances are still being
 // deleted. You must separately verify the status of the deleting action
 // with the listmanagedinstances method.
+//
+// You can specify a maximum of 1000 instances with this method per
+// request.
 func (r *RegionInstanceGroupManagersService) DeleteInstances(project string, region string, instanceGroupManager string, regioninstancegroupmanagersdeleteinstancesrequest *RegionInstanceGroupManagersDeleteInstancesRequest) *RegionInstanceGroupManagersDeleteInstancesCall {
 	c := &RegionInstanceGroupManagersDeleteInstancesCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -41060,7 +41279,7 @@ func (c *RegionInstanceGroupManagersDeleteInstancesCall) Do(opts ...googleapi.Ca
 	}
 	return ret, nil
 	// {
-	//   "description": "Schedules a group action to delete the specified instances in the managed instance group. The instances are also removed from any target pools of which they were a member. This method reduces the targetSize of the managed instance group by the number of instances that you delete. This operation is marked as DONE when the action is scheduled even if the instances are still being deleted. You must separately verify the status of the deleting action with the listmanagedinstances method.",
+	//   "description": "Schedules a group action to delete the specified instances in the managed instance group. The instances are also removed from any target pools of which they were a member. This method reduces the targetSize of the managed instance group by the number of instances that you delete. This operation is marked as DONE when the action is scheduled even if the instances are still being deleted. You must separately verify the status of the deleting action with the listmanagedinstances method.\n\nYou can specify a maximum of 1000 instances with this method per request.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.regionInstanceGroupManagers.deleteInstances",
 	//   "parameterOrder": [
@@ -41284,6 +41503,8 @@ type RegionInstanceGroupManagersInsertCall struct {
 // created even if the instances in the group have not yet been created.
 // You must separately verify the status of the individual instances
 // with the listmanagedinstances method.
+//
+// A regional managed instance group can contain up to 2000 instances.
 func (r *RegionInstanceGroupManagersService) Insert(project string, region string, instancegroupmanager *InstanceGroupManager) *RegionInstanceGroupManagersInsertCall {
 	c := &RegionInstanceGroupManagersInsertCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -41379,7 +41600,7 @@ func (c *RegionInstanceGroupManagersInsertCall) Do(opts ...googleapi.CallOption)
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a managed instance group using the information that you specify in the request. After the group is created, it schedules an action to create instances in the group using the specified instance template. This operation is marked as DONE when the group is created even if the instances in the group have not yet been created. You must separately verify the status of the individual instances with the listmanagedinstances method.",
+	//   "description": "Creates a managed instance group using the information that you specify in the request. After the group is created, it schedules an action to create instances in the group using the specified instance template. This operation is marked as DONE when the group is created even if the instances in the group have not yet been created. You must separately verify the status of the individual instances with the listmanagedinstances method.\n\nA regional managed instance group can contain up to 2000 instances.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.regionInstanceGroupManagers.insert",
 	//   "parameterOrder": [
@@ -41893,6 +42114,9 @@ type RegionInstanceGroupManagersRecreateInstancesCall struct {
 // scheduled even if the instances have not yet been recreated. You must
 // separately verify the status of the recreating action with the
 // listmanagedinstances method.
+//
+// You can specify a maximum of 1000 instances with this method per
+// request.
 func (r *RegionInstanceGroupManagersService) RecreateInstances(project string, region string, instanceGroupManager string, regioninstancegroupmanagersrecreaterequest *RegionInstanceGroupManagersRecreateRequest) *RegionInstanceGroupManagersRecreateInstancesCall {
 	c := &RegionInstanceGroupManagersRecreateInstancesCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -41990,7 +42214,7 @@ func (c *RegionInstanceGroupManagersRecreateInstancesCall) Do(opts ...googleapi.
 	}
 	return ret, nil
 	// {
-	//   "description": "Schedules a group action to recreate the specified instances in the managed instance group. The instances are deleted and recreated using the current instance template for the managed instance group. This operation is marked as DONE when the action is scheduled even if the instances have not yet been recreated. You must separately verify the status of the recreating action with the listmanagedinstances method.",
+	//   "description": "Schedules a group action to recreate the specified instances in the managed instance group. The instances are deleted and recreated using the current instance template for the managed instance group. This operation is marked as DONE when the action is scheduled even if the instances have not yet been recreated. You must separately verify the status of the recreating action with the listmanagedinstances method.\n\nYou can specify a maximum of 1000 instances with this method per request.",
 	//   "httpMethod": "POST",
 	//   "id": "compute.regionInstanceGroupManagers.recreateInstances",
 	//   "parameterOrder": [
@@ -45465,7 +45689,7 @@ type RoutersPatchCall struct {
 	header_    http.Header
 }
 
-// Patch: Updates the specified Router resource with the data included
+// Patch: Patches the specified Router resource with the data included
 // in the request. This method supports patch semantics.
 func (r *RoutersService) Patch(project string, region string, router string, router2 *Router) *RoutersPatchCall {
 	c := &RoutersPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -45564,7 +45788,7 @@ func (c *RoutersPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) 
 	}
 	return ret, nil
 	// {
-	//   "description": "Updates the specified Router resource with the data included in the request. This method supports patch semantics.",
+	//   "description": "Patches the specified Router resource with the data included in the request. This method supports patch semantics.",
 	//   "httpMethod": "PATCH",
 	//   "id": "compute.routers.patch",
 	//   "parameterOrder": [
@@ -45588,7 +45812,7 @@ func (c *RoutersPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) 
 	//       "type": "string"
 	//     },
 	//     "router": {
-	//       "description": "Name of the Router resource to update.",
+	//       "description": "Name of the Router resource to patch.",
 	//       "location": "path",
 	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
 	//       "required": true,
@@ -45604,7 +45828,8 @@ func (c *RoutersPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) 
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/compute"
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 
@@ -48965,6 +49190,165 @@ func (c *SubnetworksListCall) Pages(ctx context.Context, f func(*SubnetworkList)
 		}
 		c.PageToken(x.NextPageToken)
 	}
+}
+
+// method id "compute.subnetworks.setPrivateIpGoogleAccess":
+
+type SubnetworksSetPrivateIpGoogleAccessCall struct {
+	s                                          *Service
+	project                                    string
+	region                                     string
+	subnetwork                                 string
+	subnetworkssetprivateipgoogleaccessrequest *SubnetworksSetPrivateIpGoogleAccessRequest
+	urlParams_                                 gensupport.URLParams
+	ctx_                                       context.Context
+	header_                                    http.Header
+}
+
+// SetPrivateIpGoogleAccess: Set whether VMs in this subnet can access
+// Google services without assigning external IP addresses through
+// Private Google Access.
+func (r *SubnetworksService) SetPrivateIpGoogleAccess(project string, region string, subnetwork string, subnetworkssetprivateipgoogleaccessrequest *SubnetworksSetPrivateIpGoogleAccessRequest) *SubnetworksSetPrivateIpGoogleAccessCall {
+	c := &SubnetworksSetPrivateIpGoogleAccessCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.project = project
+	c.region = region
+	c.subnetwork = subnetwork
+	c.subnetworkssetprivateipgoogleaccessrequest = subnetworkssetprivateipgoogleaccessrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *SubnetworksSetPrivateIpGoogleAccessCall) Fields(s ...googleapi.Field) *SubnetworksSetPrivateIpGoogleAccessCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *SubnetworksSetPrivateIpGoogleAccessCall) Context(ctx context.Context) *SubnetworksSetPrivateIpGoogleAccessCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *SubnetworksSetPrivateIpGoogleAccessCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *SubnetworksSetPrivateIpGoogleAccessCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.subnetworkssetprivateipgoogleaccessrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{project}/regions/{region}/subnetworks/{subnetwork}/setPrivateIpGoogleAccess")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"project":    c.project,
+		"region":     c.region,
+		"subnetwork": c.subnetwork,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "compute.subnetworks.setPrivateIpGoogleAccess" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *SubnetworksSetPrivateIpGoogleAccessCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Set whether VMs in this subnet can access Google services without assigning external IP addresses through Private Google Access.",
+	//   "httpMethod": "POST",
+	//   "id": "compute.subnetworks.setPrivateIpGoogleAccess",
+	//   "parameterOrder": [
+	//     "project",
+	//     "region",
+	//     "subnetwork"
+	//   ],
+	//   "parameters": {
+	//     "project": {
+	//       "description": "Project ID for this request.",
+	//       "location": "path",
+	//       "pattern": "(?:(?:[-a-z0-9]{1,63}\\.)*(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?):)?(?:[0-9]{1,19}|(?:[a-z0-9](?:[-a-z0-9]{0,61}[a-z0-9])?))",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "region": {
+	//       "description": "Name of the region scoping this request.",
+	//       "location": "path",
+	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "subnetwork": {
+	//       "description": "Name of the Subnetwork resource.",
+	//       "location": "path",
+	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{project}/regions/{region}/subnetworks/{subnetwork}/setPrivateIpGoogleAccess",
+	//   "request": {
+	//     "$ref": "SubnetworksSetPrivateIpGoogleAccessRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/compute"
+	//   ]
+	// }
+
 }
 
 // method id "compute.targetHttpProxies.delete":
@@ -56611,7 +56995,7 @@ type UrlMapsPatchCall struct {
 	header_    http.Header
 }
 
-// Patch: Updates the specified UrlMap resource with the data included
+// Patch: Patches the specified UrlMap resource with the data included
 // in the request. This method supports patch semantics.
 // For details, see https://cloud.google.com/compute/docs/reference/latest/urlMaps/patch
 func (r *UrlMapsService) Patch(project string, urlMap string, urlmap *UrlMap) *UrlMapsPatchCall {
@@ -56709,7 +57093,7 @@ func (c *UrlMapsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) 
 	}
 	return ret, nil
 	// {
-	//   "description": "Updates the specified UrlMap resource with the data included in the request. This method supports patch semantics.",
+	//   "description": "Patches the specified UrlMap resource with the data included in the request. This method supports patch semantics.",
 	//   "httpMethod": "PATCH",
 	//   "id": "compute.urlMaps.patch",
 	//   "parameterOrder": [
@@ -56725,7 +57109,7 @@ func (c *UrlMapsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) 
 	//       "type": "string"
 	//     },
 	//     "urlMap": {
-	//       "description": "Name of the UrlMap resource to update.",
+	//       "description": "Name of the UrlMap resource to patch.",
 	//       "location": "path",
 	//       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
 	//       "required": true,
@@ -56741,7 +57125,8 @@ func (c *UrlMapsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) 
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/compute"
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 

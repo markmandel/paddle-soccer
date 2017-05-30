@@ -236,9 +236,9 @@ type CloudFunction struct {
 	// ServiceAccount: Output only. The service account of the function.
 	ServiceAccount string `json:"serviceAccount,omitempty"`
 
-	// SourceArchiveUrl: The URL, starting with gs://, pointing to the zip
-	// archive which contains
-	// the function.
+	// SourceArchiveUrl: The Google Cloud Storage URL, starting with gs://,
+	// pointing to the zip
+	// archive which contains the function.
 	SourceArchiveUrl string `json:"sourceArchiveUrl,omitempty"`
 
 	// SourceRepository: The hosted repository where the function is
@@ -782,7 +782,7 @@ func (s *SourceRepository) MarshalJSON() ([]byte, error) {
 //
 // - Workflow errors. A typical workflow has multiple steps. Each step
 // may
-//     have a `Status` message for error reporting purpose.
+//     have a `Status` message for error reporting.
 //
 // - Batch operations. If a client uses batch request and batch
 // response, the

@@ -21,7 +21,7 @@ import (
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/pkg/errors"
-	"k8s.io/client-go/pkg/util/uuid"
+	"k8s.io/apimachinery/pkg/util/uuid"
 )
 
 const (

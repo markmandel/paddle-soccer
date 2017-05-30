@@ -25,7 +25,7 @@ import (
 )
 
 // Version is the current api version number
-const Version string = "matchmaker:0.1"
+const Version string = "matchmaker:0.2"
 
 // Server is the http server instance
 type Server struct {

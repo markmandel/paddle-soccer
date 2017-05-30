@@ -20,11 +20,12 @@ import (
 	"log"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes/fake"
-	"k8s.io/client-go/pkg/api/resource"
 	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/runtime"
-	"k8s.io/client-go/pkg/watch"
 	core "k8s.io/client-go/testing"
 )
 
@@ -34,8 +35,8 @@ var readyNodeCondition = []v1.NodeCondition{{Type: v1.NodeReady, Status: v1.Cond
 func TestListNodePods(t *testing.T) {
 	t.Parallel()
 	fixture := &v1.PodList{Items: []v1.Pod{
-		{ObjectMeta: v1.ObjectMeta{Name: "pod1", Namespace: "default"}},
-		{ObjectMeta: v1.ObjectMeta{Name: "pod2", Namespace: "default"}}}}
+		{ObjectMeta: metav1.ObjectMeta{Name: "pod1", Namespace: "default"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "pod2", Namespace: "default"}}}}
 
 	s, err := NewServer("", "app=game-server", "0.5", 5)
 	assert.Nil(t, err)
@@ -50,12 +51,12 @@ func TestListNodePods(t *testing.T) {
 func TestSumCPUResourceRequests(t *testing.T) {
 	t.Parallel()
 	fixture := &v1.PodList{Items: []v1.Pod{
-		{ObjectMeta: v1.ObjectMeta{Name: "pod1", Namespace: "default"},
+		{ObjectMeta: metav1.ObjectMeta{Name: "pod1", Namespace: "default"},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{Resources: v1.ResourceRequirements{
 						Requests: v1.ResourceList{v1.ResourceCPU: resource.MustParse("0.5")}}}}}},
-		{ObjectMeta: v1.ObjectMeta{Name: "pod2", Namespace: "default"},
+		{ObjectMeta: metav1.ObjectMeta{Name: "pod2", Namespace: "default"},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{Resources: v1.ResourceRequirements{
@@ -68,25 +69,25 @@ func TestSumCPUResourceRequests(t *testing.T) {
 func TestNewNodeList(t *testing.T) {
 	t.Parallel()
 	nodes := &v1.NodeList{Items: []v1.Node{
-		{ObjectMeta: v1.ObjectMeta{Name: "foo", Labels: map[string]string{"app": "game-server"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "foo", Labels: map[string]string{"app": "game-server"}},
 			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("4.0")}}},
-		{ObjectMeta: v1.ObjectMeta{Name: "bar", Labels: map[string]string{"app": "game-server"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "bar", Labels: map[string]string{"app": "game-server"}},
 			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("4.0")}}}}}
 
 	pl1 := &v1.PodList{Items: []v1.Pod{
-		{ObjectMeta: v1.ObjectMeta{Name: "pod1", Namespace: "default"},
+		{ObjectMeta: metav1.ObjectMeta{Name: "pod1", Namespace: "default"},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{Resources: v1.ResourceRequirements{
 						Requests: v1.ResourceList{v1.ResourceCPU: resource.MustParse("0.5")}}}}}},
-		{ObjectMeta: v1.ObjectMeta{Name: "pod2", Namespace: "default"},
+		{ObjectMeta: metav1.ObjectMeta{Name: "pod2", Namespace: "default"},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{Resources: v1.ResourceRequirements{
 						Requests: v1.ResourceList{v1.ResourceCPU: resource.MustParse("0.3")}}}}}}}}
 
 	pl2 := &v1.PodList{Items: []v1.Pod{
-		{ObjectMeta: v1.ObjectMeta{Name: "pod3", Namespace: "default"},
+		{ObjectMeta: metav1.ObjectMeta{Name: "pod3", Namespace: "default"},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{Resources: v1.ResourceRequirements{
@@ -124,16 +125,16 @@ func TestNewNodeList(t *testing.T) {
 
 func TestNodeReady(t *testing.T) {
 	t.Parallel()
-	n := v1.Node{ObjectMeta: v1.ObjectMeta{Name: "foo"},
+	n := v1.Node{ObjectMeta: metav1.ObjectMeta{Name: "foo"},
 		Status: v1.NodeStatus{}}
 
 	assert.False(t, nodeReady(n))
 
-	n = v1.Node{ObjectMeta: v1.ObjectMeta{Name: "foo"},
+	n = v1.Node{ObjectMeta: metav1.ObjectMeta{Name: "foo"},
 		Status: v1.NodeStatus{Conditions: []v1.NodeCondition{{Type: v1.NodeReady, Status: v1.ConditionFalse}}}}
 	assert.False(t, nodeReady(n))
 
-	n = v1.Node{ObjectMeta: v1.ObjectMeta{Name: "foo"},
+	n = v1.Node{ObjectMeta: metav1.ObjectMeta{Name: "foo"},
 		Status: v1.NodeStatus{Conditions: readyNodeCondition}}
 	assert.True(t, nodeReady(n))
 }
@@ -141,13 +142,13 @@ func TestNodeReady(t *testing.T) {
 func TestAvailableNodes(t *testing.T) {
 	t.Parallel()
 	nodes := &v1.NodeList{Items: []v1.Node{
-		{ObjectMeta: v1.ObjectMeta{Name: "foo", Labels: map[string]string{"app": "game-server"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "foo", Labels: map[string]string{"app": "game-server"}},
 			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("1.0")},
 				Conditions: readyNodeCondition}},
-		{ObjectMeta: v1.ObjectMeta{Name: "bar", Labels: map[string]string{"app": "game-server"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "bar", Labels: map[string]string{"app": "game-server"}},
 			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("2.0")},
 				Conditions: readyNodeCondition}},
-		{ObjectMeta: v1.ObjectMeta{Name: "goat", Labels: map[string]string{"app": "game-server"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "goat", Labels: map[string]string{"app": "game-server"}},
 			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("3.0")},
 				Conditions: []v1.NodeCondition{{Type: v1.NodeReady, Status: v1.ConditionFalse}}}}}}
 
@@ -161,27 +162,27 @@ func TestAvailableNodes(t *testing.T) {
 func TestCpuRequestsAvailable(t *testing.T) {
 	t.Parallel()
 	nodes := &v1.NodeList{Items: []v1.Node{
-		{ObjectMeta: v1.ObjectMeta{Name: "foo", Labels: map[string]string{"app": "game-server"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "foo", Labels: map[string]string{"app": "game-server"}},
 			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("2.0")},
 				Conditions: readyNodeCondition}},
-		{ObjectMeta: v1.ObjectMeta{Name: "bar", Labels: map[string]string{"app": "game-server"}},
+		{ObjectMeta: metav1.ObjectMeta{Name: "bar", Labels: map[string]string{"app": "game-server"}},
 			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("2.0")},
 				Conditions: readyNodeCondition}}}}
 
 	pl1 := &v1.PodList{Items: []v1.Pod{
-		{ObjectMeta: v1.ObjectMeta{Name: "pod1", Namespace: "default"},
+		{ObjectMeta: metav1.ObjectMeta{Name: "pod1", Namespace: "default"},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{Resources: v1.ResourceRequirements{
 						Requests: v1.ResourceList{v1.ResourceCPU: resource.MustParse("0.5")}}}}}},
-		{ObjectMeta: v1.ObjectMeta{Name: "pod2", Namespace: "default"},
+		{ObjectMeta: metav1.ObjectMeta{Name: "pod2", Namespace: "default"},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{Resources: v1.ResourceRequirements{
 						Requests: v1.ResourceList{v1.ResourceCPU: resource.MustParse("0.3")}}}}}}}}
 
 	pl2 := &v1.PodList{Items: []v1.Pod{
-		{ObjectMeta: v1.ObjectMeta{Name: "pod3", Namespace: "default"},
+		{ObjectMeta: metav1.ObjectMeta{Name: "pod3", Namespace: "default"},
 			Spec: v1.PodSpec{
 				Containers: []v1.Container{
 					{Resources: v1.ResourceRequirements{

@@ -549,6 +549,7 @@ type Binding struct {
 	// group.
 	//    For example, `admins@example.com`.
 	//
+	//
 	// * `domain:{domain}`: A Google Apps domain name that represents all
 	// the
 	//    users of that domain. For example, `google.com` or
@@ -1379,7 +1380,13 @@ type ImportVariantsRequest struct {
 	//   "FORMAT_UNSPECIFIED"
 	//   "FORMAT_VCF" - VCF (Variant Call Format). The VCF files may be gzip
 	// compressed. gVCF is
-	// also supported.
+	// also supported. Disclaimer: gzip VCF imports are currently much
+	// slower
+	// than equivalent uncompressed VCF imports. For this reason,
+	// uncompressed
+	// VCF is currently recommended for imports with more than 1GB
+	// combined
+	// uncompressed size, or for time sensitive imports.
 	//   "FORMAT_COMPLETE_GENOMICS" - Complete Genomics masterVarBeta
 	// format. The masterVarBeta files may
 	// be bzip2 compressed.
@@ -3683,7 +3690,7 @@ func (s *SetIamPolicyRequest) MarshalJSON() ([]byte, error) {
 // arbitrary
 // information about the error. There is a predefined set of error
 // detail types
-// in the package `google.rpc` which can be used for common error
+// in the package `google.rpc` that can be used for common error
 // conditions.
 //
 // # Language mapping
@@ -3716,7 +3723,7 @@ func (s *SetIamPolicyRequest) MarshalJSON() ([]byte, error) {
 //
 // - Workflow errors. A typical workflow has multiple steps. Each step
 // may
-//     have a `Status` message for error reporting purpose.
+//     have a `Status` message for error reporting.
 //
 // - Batch operations. If a client uses batch request and batch
 // response, the
