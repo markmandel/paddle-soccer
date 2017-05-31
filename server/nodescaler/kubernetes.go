@@ -15,6 +15,9 @@
 package nodescaler
 
 import (
+	"sync"
+	"time"
+
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -23,12 +26,19 @@ import (
 	"k8s.io/client-go/pkg/api/v1"
 )
 
+const (
+	// Attribute key for where to put the timestamp when
+	// making changes to a node
+	timestampAnnotation = "nodescale/timestamp"
+)
+
 // nodeList is the set of current nodes that this
 // server manages, with the accompanying pods for
 // each node
 type nodeList struct {
-	nodes *v1.NodeList
-	pods  map[string]*v1.PodList
+	nodes      *v1.NodeList
+	pods       map[string]*v1.PodList
+	cpuRequest int64
 }
 
 // newNodeList queries kubernetes to get a list of nodes
@@ -41,7 +51,7 @@ func (s *Server) newNodeList() (*nodeList, error) {
 		return result, errors.Wrap(err, "Could not get node list from Kubernetes")
 	}
 
-	result = &nodeList{nodes: nodes, pods: map[string]*v1.PodList{}}
+	result = &nodeList{nodes: nodes, pods: map[string]*v1.PodList{}, cpuRequest: s.cpuRequest}
 	for _, n := range nodes.Items {
 		pods, err := s.listNodePods(n)
 		if err != nil {
@@ -49,6 +59,7 @@ func (s *Server) newNodeList() (*nodeList, error) {
 		}
 		result.pods[n.Name] = pods
 	}
+
 	return result, err
 }
 
@@ -57,32 +68,81 @@ func (nl nodeList) nodePods(n v1.Node) *v1.PodList {
 	return nl.pods[n.Name]
 }
 
-// returns nodes that are available to be used.
-// This could mean they are ready, or (TBD)
-// that they are available to be scheduled.
+// availableNodes returns nodes that are available to be used.
+// This could mean they are ready
+// that they are scheduled.
 func (nl nodeList) availableNodes() []v1.Node {
-	result := []v1.Node{}
+	var result []v1.Node
 	for _, n := range nl.nodes.Items {
-		if nodeReady(n) {
+		if nodeReady(n) && !n.Spec.Unschedulable {
 			result = append(result, n)
 		}
 	}
-
 	return result
 }
 
-// implements Kubernetes watch.Interface to allow for
+// cordonedNodes returns all notes that are set to being
+// unscheduled
+func (nl nodeList) cordonedNodes() []v1.Node {
+	var result []v1.Node
+	for _, n := range nl.nodes.Items {
+		if n.Spec.Unschedulable {
+			result = append(result, n)
+		}
+	}
+	return result
+}
+
+// cpuRequestsAvailable looks at each node's cpu capacity,
+// the current available free space in it, and determines
+// how many cpu requests are can be be fit in the
+// remaining space on each node
+func (nl *nodeList) cpuRequestsAvailable() int64 {
+	var avail int64
+	for _, n := range nl.availableNodes() {
+		capacity := n.Status.Capacity[v1.ResourceCPU]
+		requests := nl.sumResourceLimit(n, v1.ResourceCPU)
+		diff := capacity.MilliValue() - requests
+
+		// take advantage of the fact we are using
+		// int64's and remainders / fractions are
+		// totally not what we want
+		avail += diff / nl.cpuRequest
+	}
+
+	return avail
+}
+
+// sumResourceLimit returns the sum of all of the limits for given resource for all the pods in a
+// specific Node
+func (nl *nodeList) sumResourceLimit(n v1.Node, name v1.ResourceName) int64 {
+	var total int64
+	pl := nl.nodePods(n)
+	for _, p := range pl.Items {
+		for _, c := range p.Spec.Containers {
+			r := c.Resources.Limits[name]
+			total += r.MilliValue()
+		}
+	}
+
+	return total
+}
+
+// gameWatcher implements Kubernetes watch.Interface to allow for
 // scaling up to be processed whenever a game event occurs
-// Adds a value to the event channel whenever a game is
-// added to the nodepool in question
+// Adds a value to the events channel whenever a game is
+// added to the nodepool in question, or deleted
 type gameWatcher struct {
 	watcher watch.Interface
-	event   chan bool
+	events  chan bool
+	// Wait Group to ensure that closing of channels on stop
+	// doesn't interrupt a currently processing event.
+	wg sync.WaitGroup
 }
 
 // newGameWatcher returns a new game watcher
 func (s *Server) newGameWatcher() (*gameWatcher, error) {
-	g := &gameWatcher{event: make(chan bool)}
+	g := &gameWatcher{events: make(chan bool)}
 
 	watcher, err := s.cs.CoreV1().Pods(api.NamespaceAll).Watch(metav1.ListOptions{LabelSelector: "sessions=game"})
 	if err != nil {
@@ -96,38 +156,24 @@ func (s *Server) newGameWatcher() (*gameWatcher, error) {
 // start starts the game watcher, watching the K8 event stream
 func (g *gameWatcher) start() {
 	go func() {
+		// WaitGroup for ensuring that if we are shutting down
+		// we don't shut down the events/deleted channels
+		// before ResultChan's events are fully processed.
+		g.wg.Add(1)
 		for e := range g.watcher.ResultChan() {
-			if e.Type == watch.Added {
-				g.event <- true
+			if e.Type == watch.Added || e.Type == watch.Deleted {
+				g.events <- true
 			}
 		}
+		g.wg.Done()
 	}()
 }
 
 // stop closes all the channels, when you are done
 func (g *gameWatcher) stop() {
 	g.watcher.Stop()
-	close(g.event)
-}
-
-// cpuRequestsAvailable looks at each node's cpu capacity,
-// the current available free space in it, and determines
-// how many cpu requests are can be be fit in the
-// remaining space on each node
-func (s *Server) cpuRequestsAvailable(nl *nodeList) int64 {
-	var avail int64
-	for _, n := range nl.availableNodes() {
-		capacity := n.Status.Capacity[v1.ResourceCPU]
-		requests := sumCPUResourceRequests(nl.nodePods(n))
-		diff := capacity.MilliValue() - requests
-
-		// take advantage of the fact we are using
-		// int64's and remainders / fractions are
-		// totally not what we want
-		avail += diff / s.cpuRequest
-	}
-
-	return avail
+	g.wg.Wait()
+	close(g.events)
 }
 
 // nodeReady check if a node's kublet is ready to work
@@ -151,16 +197,18 @@ func (s *Server) listNodePods(n v1.Node) (*v1.PodList, error) {
 	return pods, errors.Wrapf(err, "Could not get pods for Node: %v", n.Name)
 }
 
-// sumCPUResourceRequests returns the sum of all the pod
-// CPU resource requests
-func sumCPUResourceRequests(pl *v1.PodList) int64 {
-	var total int64
-	for _, p := range pl.Items {
-		for _, c := range p.Spec.Containers {
-			r := c.Resources.Requests[v1.ResourceCPU]
-			total += r.MilliValue()
-		}
+// cordon sets or unsets a node to being unschedulable
+// a 'true' parameter will set a node to being unschedulable (cordoned)
+// this also sets a timestamp annotation on the node, to track when this was
+// last done.
+func (s *Server) cordon(n *v1.Node, unscheduled bool) error {
+	now, err := time.Now().UTC().MarshalText()
+	if err != nil {
+		return errors.Wrap(err, "Could not marshall now datetime as string")
 	}
 
-	return total
+	n.Spec.Unschedulable = unscheduled
+	n.ObjectMeta.Annotations[timestampAnnotation] = string(now)
+	_, err = s.cs.CoreV1().Nodes().Update(n)
+	return errors.Wrapf(err, "Error Updating Node %#v", n)
 }

@@ -36,15 +36,16 @@ type Server struct {
 	// `nodeSelector` is a k8s selector for what nodes to manage
 	cs           kubernetes.Interface
 	nodeSelector string
-	// `cpuRequest` is the cpu capacity requested for each server
+	// `cpuRequest` is the cpu capacity requested for each server (MilliValue)
 	cpuRequest int64
-	// `bufferCount``is the number of cpuRequest to make sure is available
+	// `bufferCount``is the number of cpuRequest (MilliValue) to make sure is available
 	// at and given moment in the nodePool
 	bufferCount int64
 	// nodePool management implementation.
-	// for now, there is just GCE
+	// for now, there is just GKE
 	nodePool NodePool
-	// minimum pool size
+	// Duration between each tick for the node checl.
+	tickDuration time.Duration
 }
 
 // handler is the extended http.HandleFunc to provide context for this application
@@ -54,17 +55,18 @@ type handler func(*Server, http.ResponseWriter, *http.Request) error
 // `nodeSelector` is a k8s selector for what nodes to manage
 // `cpuRequest` is the cpu capacity requested for each server
 // `bufferCount``is the number of cpuRequest to make sure is available
+// `tickDuration` is the time required for each tick between checks.
 // at and given moment in the cluster
-func NewServer(hostAddr, nodeSelector string, cpuRequest string, bufferCount int64) (*Server, error) {
-	log.Printf("[Info][Server] Starting server version %v on port %v, managing node selector %v",
-		Version, hostAddr, nodeSelector)
+func NewServer(hostAddr, nodeSelector string, cpuRequest string, bufferCount int64, tickDuration time.Duration) (*Server, error) {
+	log.Printf("[Info][Server] Starting server version %v on port %v, managing node selector %v and tick count of %v",
+		Version, hostAddr, nodeSelector, tickDuration)
 
 	q, err := resource.ParseQuantity(cpuRequest)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Could not parse cpu resource request: %v", cpuRequest)
 	}
 
-	s := &Server{nodeSelector: nodeSelector, cpuRequest: q.MilliValue(), bufferCount: bufferCount}
+	s := &Server{nodeSelector: nodeSelector, cpuRequest: q.MilliValue(), bufferCount: bufferCount, tickDuration: tickDuration}
 	r := s.newHandler()
 
 	s.srv = &http.Server{
@@ -106,13 +108,13 @@ func (s *Server) Start() error {
 
 	go func() {
 		log.Print("[Info][Start] Starting node scaling...")
-		tick := time.Tick(10 * time.Second) //TODO: Make this an env var
+		tick := time.Tick(s.tickDuration)
 
 		for {
 			select {
 			case <-quit:
 				return
-			case <-gw.event:
+			case <-gw.events:
 				log.Print("[Info][Scaling] Recieved Add Event, Scaling...")
 				if err := s.scaleNodes(); err != nil {
 					log.Printf("[Error][Scaling] %+v", err)

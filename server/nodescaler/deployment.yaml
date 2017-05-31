@@ -29,3 +29,5 @@ spec:
             value: "0.5"
           - name: BUFFER_COUNT
             value: "10"
+          - name: TICK_SECOND
+            value: "10"

@@ -39,7 +39,7 @@ All the non-Unity server side code is found in the `server` folder.
 
 ### Infrastructure
 
-This project works on Kubernetes [1.5.2](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG.md#v152) or higher, as it uses Kubernetes [StatefulSets](https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/).
+This project works on Kubernetes [1.6.0](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG.md#v160) or higher, as it uses Kubernetes [Node Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity-beta-feature).
 
 If you have a [Google Cloud Platform](https://cloud.google.com/) Project configured and the [Google Cloud SDK](https://cloud.google.com/sdk/) installed, you can cd into the `infrastructure` folder, and run `make deploy` to deploy a 4 node cluster over 2 nodepools, as well as the accompanying firewall rules.  `make auth` will authenticate your local `kubectl` tooling with this cluster.
 

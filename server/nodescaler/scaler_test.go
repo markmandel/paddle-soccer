@@ -15,34 +15,42 @@
 package nodescaler
 
 import (
-	"testing"
-
 	"log"
+	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/client-go/pkg/api/v1"
 	core "k8s.io/client-go/testing"
 )
 
-func TestScaleNodes(t *testing.T) {
-	nodes := &v1.NodeList{Items: []v1.Node{
-		{ObjectMeta: metav1.ObjectMeta{Name: "foo", Labels: map[string]string{"app": "game-server"}},
-			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("2.0")},
-				Conditions: readyNodeCondition}},
-		{ObjectMeta: metav1.ObjectMeta{Name: "bar", Labels: map[string]string{"app": "game-server"}},
-			Status: v1.NodeStatus{Capacity: v1.ResourceList{v1.ResourceCPU: resource.MustParse("2.0")},
-				Conditions: readyNodeCondition}}}}
+type NodePoolMock struct {
+	size int64
+}
+
+// IncreaseToSize
+func (npm *NodePoolMock) IncreaseToSize(size int64) error {
+	if size <= npm.size {
+		log.Printf("[Test][Mock:IncreaseToSize] Ignoring resize to %v, as size is already %v", size, npm.size)
+		return nil
+	}
+	log.Printf("[Test][Mock:IncreaseToSize] Resising to: %v", size)
+	npm.size = size
+	return nil
+}
+
+func TestScaleUpNodes(t *testing.T) {
+	t.Parallel()
+
+	nodes := newNodeListFixture(nlConfig{count: 2, cpu: []string{"2.0", "2.0"}})
+	assertAllUnscheduled(t, nodes)
 
 	cs := &fake.Clientset{}
-	cs.AddReactor("list", "nodes", func(a core.Action) (bool, runtime.Object, error) {
-		return true, nodes, nil
-	})
+	defaultListNodeReactor(cs, nodes)
 
-	s, err := NewServer("", "app=game-server", "0.5", 5)
+	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
 	assert.Nil(t, err)
 	s.cs = cs
 
@@ -52,21 +60,12 @@ func TestScaleNodes(t *testing.T) {
 	err = s.scaleNodes()
 	assert.Nil(t, err)
 	assert.Equal(t, expected, mock.size)
+	assertAllUnscheduled(t, nodes)
 
+	pl1 := newPodListFixture([]string{"0.5", "0.3"})
 	cs.AddReactor("list", "pods", func(a core.Action) (bool, runtime.Object, error) {
-		if a.(core.ListAction).GetListRestrictions().Fields.String() == "spec.nodeName=foo" {
-			return true,
-				&v1.PodList{Items: []v1.Pod{
-					{ObjectMeta: metav1.ObjectMeta{Name: "pod1", Namespace: "default"},
-						Spec: v1.PodSpec{
-							Containers: []v1.Container{
-								{Resources: v1.ResourceRequirements{
-									Requests: v1.ResourceList{v1.ResourceCPU: resource.MustParse("0.5")}}}}}},
-					{ObjectMeta: metav1.ObjectMeta{Name: "pod2", Namespace: "default"},
-						Spec: v1.PodSpec{
-							Containers: []v1.Container{
-								{Resources: v1.ResourceRequirements{
-									Requests: v1.ResourceList{v1.ResourceCPU: resource.MustParse("0.3")}}}}}}}}, nil
+		if a.(core.ListAction).GetListRestrictions().Fields.String() == "spec.nodeName=node0" {
+			return true, pl1, nil
 		}
 		return false, nil, nil
 	})
@@ -75,16 +74,12 @@ func TestScaleNodes(t *testing.T) {
 	err = s.scaleNodes()
 	assert.Nil(t, err)
 	assert.Equal(t, expected, mock.size)
+	assertAllUnscheduled(t, nodes)
 
+	pl2 := newPodListFixture([]string{"1.8"})
 	cs.AddReactor("list", "pods", func(a core.Action) (bool, runtime.Object, error) {
-		if a.(core.ListAction).GetListRestrictions().Fields.String() == "spec.nodeName=bar" {
-			return true,
-				&v1.PodList{Items: []v1.Pod{
-					{ObjectMeta: metav1.ObjectMeta{Name: "pod1", Namespace: "default"},
-						Spec: v1.PodSpec{
-							Containers: []v1.Container{
-								{Resources: v1.ResourceRequirements{
-									Requests: v1.ResourceList{v1.ResourceCPU: resource.MustParse("1.8")}}}}}}}}, nil
+		if a.(core.ListAction).GetListRestrictions().Fields.String() == "spec.nodeName=node1" {
+			return true, pl2, nil
 		}
 		return false, nil, nil
 	})
@@ -93,19 +88,119 @@ func TestScaleNodes(t *testing.T) {
 	err = s.scaleNodes()
 	assert.Nil(t, err)
 	assert.Equal(t, int64(3), mock.size)
+	assertAllUnscheduled(t, nodes)
 }
 
-type NodePoolMock struct {
-	size int64
+func TestScaleUpCordonedNodesNoPods(t *testing.T) {
+	t.Parallel()
+
+	nodes := newNodeListFixture(nlConfig{count: 2, cpu: []string{"2.0", "2.0"}})
+	nodes.Items[0].Spec.Unschedulable = true
+	// gate it, just to be sure
+	assert.True(t, nodes.Items[0].Spec.Unschedulable)
+	assert.False(t, nodes.Items[1].Spec.Unschedulable)
+
+	cs := &fake.Clientset{}
+	defaultListNodeReactor(cs, nodes)
+	defaultUpdateNodeReactor(cs, nodes)
+
+	// use a size of 0, as a way to ensure this doesn't get called.
+	mock := &NodePoolMock{size: 0}
+	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	assert.Nil(t, err)
+	s.cs = cs
+	s.nodePool = mock
+
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+	assertAllUnscheduled(t, nodes)
+	assert.Equal(t, int64(0), mock.size)
+
+	// same test, but with three nodes
+	nodes = newNodeListFixture(nlConfig{count: 3, cpu: []string{"2.0", "2.0", "2.0"}})
+	nodes.Items[0].Spec.Unschedulable = true
+	nodes.Items[1].Spec.Unschedulable = true
+
+	mock = &NodePoolMock{size: 0}
+	s, err = NewServer("", "app=game-server", "0.5", 5, time.Second)
+	assert.Nil(t, err)
+	cs = &fake.Clientset{}
+	defaultListNodeReactor(cs, nodes)
+	defaultUpdateNodeReactor(cs, nodes)
+	s.cs = cs
+	s.nodePool = mock
+
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+	nl, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, 2, len(nl.availableNodes()))
+	assert.Equal(t, 1, len(nl.cordonedNodes()))
+	assert.Equal(t, int64(0), mock.size)
 }
 
-// IncreaseToSize
-func (npm *NodePoolMock) IncreaseToSize(size int64) error {
-	if size <= npm.size {
-		log.Printf("[Debug][Mock:IncreaseToSize] Ignoring resize to %v, as size is already %v", size, npm.size)
-		return nil
+func TestScaleUpCordonedNodesWithPods(t *testing.T) {
+	// we fake pods, by manipulating the allocatable value
+	nodes := newNodeListFixture(nlConfig{count: 3, cpu: []string{"2.0", "2.0", "2.0"}})
+	nodes.Items[0].Spec.Unschedulable = true
+	nodes.Items[1].Spec.Unschedulable = true
+	pods := newPodListFixture([]string{"0.5"})
+
+	cs := &fake.Clientset{}
+	defaultListNodeReactor(cs, nodes)
+	defaultUpdateNodeReactor(cs, nodes)
+	defaultListPodReactor(cs, map[string]*v1.PodList{"node1": pods})
+
+	// use a size of 0, as a way to ensure this doesn't get called.
+	mock := &NodePoolMock{size: 0}
+	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	assert.Nil(t, err)
+	s.cs = cs
+	s.nodePool = mock
+
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+	assert.False(t, nodes.Items[2].Spec.Unschedulable, "Node2 should not be unscheduled")
+	assert.False(t, nodes.Items[1].Spec.Unschedulable, "Node1 should not be unscheduled")
+	assert.True(t, nodes.Items[0].Spec.Unschedulable, "Node0 should be unscheduled")
+	assert.Equal(t, int64(0), mock.size)
+}
+
+func TestScaleDownCordonNodes(t *testing.T) {
+	nodes := newNodeListFixture(nlConfig{count: 2, cpu: []string{"5.0", "5.0"}})
+
+	cs := &fake.Clientset{}
+	defaultListNodeReactor(cs, nodes)
+	defaultUpdateNodeReactor(cs, nodes)
+
+	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	assert.Nil(t, err)
+	s.cs = cs
+
+	// Make sure at least one of them is unscheduled
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	nl, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(nl.availableNodes()))
+	assert.Equal(t, 1, len(nl.cordonedNodes()))
+
+	// reset nodes, and up their capacity to 6.0
+	for i, n := range nodes.Items {
+		n.Spec.Unschedulable = false
+		n.Status.Capacity.Cpu().Set(6)
+		nodes.Items[i] = n
 	}
-	log.Printf("[Debug][Mock:IncreaseToSize] Resising to: %v", size)
-	npm.size = size
-	return nil
+
+	pl1 := newPodListFixture([]string{"0.5"})
+	defaultListPodReactor(cs, map[string]*v1.PodList{"node0": {}, "node1": pl1})
+
+	log.Printf("[Test][%v] Scaling down after resetting capacity to 6, and adding a single pod to node1.", t.Name())
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+	nl, err = s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(nl.availableNodes()))
+	assert.Equal(t, "node0", nl.nodes.Items[0].Name)
 }

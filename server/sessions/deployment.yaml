@@ -23,13 +23,13 @@ spec:
             periodSeconds: 5
             timeoutSeconds: 3
         env:
-          - name: REDIS_SERVICE # TODO: Use a configmap instead
+          - name: REDIS_SERVICE
             value: sessions-redis:6379
           - name: GAME_SERVER_IMAGE
             value: gcr.io/${PROJECT}/soccer-server:0.1
           - name: GAME_NODE_SELECTOR
             value: "role:game-server"
           - name: CPU_LIMIT
-            value: "0.5"
+            value: "0.1"
         ports:
         - containerPort: 8080

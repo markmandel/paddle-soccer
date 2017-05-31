@@ -51,3 +51,6 @@ deploy-rs:
 # delete the pods, so they come down again
 re-deploy:
 	kubectl get pods --selector=role=nodescaler-server | tail -n -1 | awk '{ print $$1 }' | xargs kubectl delete pod
+
+uncordon-all:
+	kubectl get nodes -o name | xargs -I! kubectl uncordon !

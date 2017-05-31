@@ -1,10 +1,9 @@
 # Unity Multiplayer Soccer - TODO List
 
-- Use pod affinity to keep all the game instances toghether
 - Autoscaling (Down)
-    - If removing a node will still keep you above buffer - then cordon the node with the least pods on it
-    - (up) if autoscaling up, check to see if there are cordoned nodes to turn back on
-    - once a cordoned node is empty, then delete the instance
+    - (up) if autoscaling up, check to see if there are cordoned nodes to turn back on (will need to
+    ensure capacity calculation doesn't include unscheduled nodes)
+    - once a cordoned node is empty, then delete the instance (after a given time)
     - Write minimum and maximum values for scaling
 - Make it so a player can't go into the goal area
 - Show "GOAL" when a goal happens

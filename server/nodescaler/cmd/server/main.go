@@ -21,6 +21,8 @@ import (
 
 	"strconv"
 
+	"time"
+
 	"github.com/markmandel/paddle-soccer/server/nodescaler"
 )
 
@@ -43,6 +45,10 @@ const (
 	// the scaler how many game servers you want a buffer of
 	// to ensure there is space for new servers.
 	bufferCountEnv = "BUFFER_COUNT"
+
+	// tickSecondsEnv is the environment variable to tell
+	// the scaler how many seconds between each check
+	tickerSecondEnv = "TICK_SECOND"
 )
 
 // main function for starting the server
@@ -61,7 +67,13 @@ func main() {
 		log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", bufferCountEnv, os.Getenv(bufferCountEnv), err)
 	}
 
-	s, err := nodescaler.NewServer(":"+port, os.Getenv(nodeSelectorEnv), os.Getenv(cpuRequestEnv), int64(bufferCount))
+	tickSecond, err := strconv.Atoi(os.Getenv(tickerSecondEnv))
+	if err != nil {
+		log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", tickerSecondEnv, os.Getenv(tickerSecondEnv), err)
+	}
+
+	s, err := nodescaler.NewServer(":"+port, os.Getenv(nodeSelectorEnv), os.Getenv(cpuRequestEnv),
+		int64(bufferCount), time.Duration(tickSecond)*time.Second)
 	if err != nil {
 		log.Fatalf("[Error][Main] %+v", err)
 	}
