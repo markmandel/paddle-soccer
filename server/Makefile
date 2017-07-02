@@ -39,6 +39,7 @@ test:
 	cd sessions && $(MAKE) test
 	cd pkg && $(MAKE) test
 	cd matchmaker && $(MAKE) test
+	cd nodescaler && $(MAKE) test
 
 # run all the tests in the CI docker container
 docker-test:
@@ -67,18 +68,6 @@ clean-k8s:
 	kubectl delete persistentvolume --all
 	kubectl delete persistentvolumeclaim --all
 	kubectl delete daemonsets --all
-
-# easy way to pull in all the dependencies the project uses
-# handy because godep looks in the $GOPATH.
-# Uses https://github.com/golang/dep for dependency management
-# You may want to also use `govend --prune` for pruning
-deps:
-	dep ensure k8s.io/client-go@release-2.0
-	dep ensure github.com/gorilla/mux
-	dep ensure github.com/garyburd/redigo #/redis
-	dep ensure github.com/cenkalti/backoff
-	dep ensure github.com/pkg/errors
-	dep ensure github.com/stretchr/testify #/assert
 
 # Fire up a godoc server
 godoc:
