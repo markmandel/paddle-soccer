@@ -96,7 +96,7 @@ func (s Server) uncordonNodes(nl *nodeList, gameNumber int64) (bool, error) {
 	// first we need to take all nodes, and sort by decreasing allocatable value
 	nodes := nl.cordonedNodes()
 	if len(nodes) == 0 {
-		log.Print("[Info][[uncordonNodes] No nodes that are unscheduled, exiting...")
+		log.Print("[Info][uncordonNodes] No nodes that are unscheduled, exiting...")
 		return false, nil
 	}
 
@@ -149,7 +149,7 @@ func (s Server) cordonNodes(nl *nodeList, gameNumber int64) error {
 		return nil
 	}
 
-	log.Printf("[Info][[CordonNodes] Cordoning %v nodes", diff)
+	log.Printf("[Info][CordonNodes] Cordoning %v nodes", diff)
 
 	// sort the nodes, such that the one with the least number of games are first
 	nodes := nl.nodes.Items
