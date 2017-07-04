@@ -122,6 +122,12 @@
   version = "v1.4.0"
 
 [[projects]]
+  name = "github.com/jonboulle/clockwork"
+  packages = ["."]
+  revision = "2eee05ed794112d45db504eb05aa693efd2b8b09"
+  version = "v0.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/juju/ratelimit"
   packages = ["."]
@@ -238,6 +244,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a4af0154805a3b74eb6b7986f3947d71901b9cff7c72c512f48817ac2f7466f0"
+  inputs-digest = "56e7b38f2e894033185cdff324167e1a3ce5440abf61a2273ea1969406784fa3"
   solver-name = "gps-cdcl"
   solver-version = 1

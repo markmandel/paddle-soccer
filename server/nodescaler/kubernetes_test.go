@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jonboulle/clockwork"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -157,10 +158,10 @@ func TestCordon(t *testing.T) {
 	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
 	assert.Nil(t, err)
 	s.cs = cs
+	s.clock = clockwork.NewFakeClock()
 	defaultListNodeReactor(cs, nodes)
 	defaultUpdateNodeReactor(cs, nodes)
 
-	now := time.Now().UTC()
 	node := nodes.Items[0]
 	err = s.cordon(&node, true)
 	assert.Nil(t, err)
@@ -168,7 +169,7 @@ func TestCordon(t *testing.T) {
 	var ts time.Time
 	err = ts.UnmarshalText([]byte(node.ObjectMeta.Annotations[timestampAnnotation]))
 	assert.Nil(t, err)
-	assert.True(t, ts.Equal(now) || ts.After(now), "Now: %v is not equal to or after %v", now, ts)
+	assert.Equal(t, ts, s.clock.Now())
 
 	nl, err := s.newNodeList()
 	assert.Nil(t, err)
@@ -180,7 +181,7 @@ func TestCordon(t *testing.T) {
 	assert.False(t, node.Spec.Unschedulable)
 	err = ts.UnmarshalText([]byte(node.ObjectMeta.Annotations[timestampAnnotation]))
 	assert.Nil(t, err)
-	assert.True(t, ts.Equal(now) || ts.After(now), "Now: %v is not equal to or after %v", now, ts)
+	assert.Equal(t, ts, s.clock.Now())
 
 	nl, err = s.newNodeList()
 	assert.Nil(t, err)

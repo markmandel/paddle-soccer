@@ -16,7 +16,6 @@ package nodescaler
 
 import (
 	"sync"
-	"time"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -202,7 +201,7 @@ func (s *Server) listNodePods(n v1.Node) (*v1.PodList, error) {
 // this also sets a timestamp annotation on the node, to track when this was
 // last done.
 func (s *Server) cordon(n *v1.Node, unscheduled bool) error {
-	now, err := time.Now().UTC().MarshalText()
+	now, err := s.clock.Now().UTC().MarshalText()
 	if err != nil {
 		return errors.Wrap(err, "Could not marshall now datetime as string")
 	}

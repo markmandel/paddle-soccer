@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/jonboulle/clockwork"
 	"github.com/markmandel/paddle-soccer/server/nodescaler/gce"
 	"github.com/markmandel/paddle-soccer/server/pkg/kube"
 	"github.com/pkg/errors"
@@ -32,7 +33,8 @@ const Version string = "nodescaler:0.2"
 
 // Server is the http server instance
 type Server struct {
-	srv *http.Server
+	srv   *http.Server
+	clock clockwork.Clock
 	// `nodeSelector` is a k8s selector for what nodes to manage
 	cs           kubernetes.Interface
 	nodeSelector string
@@ -73,6 +75,7 @@ func NewServer(hostAddr, nodeSelector string, cpuRequest string, bufferCount int
 		Handler: r,
 		Addr:    hostAddr,
 	}
+	s.clock = clockwork.NewRealClock()
 
 	return s, nil
 }
