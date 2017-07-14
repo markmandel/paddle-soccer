@@ -166,7 +166,7 @@ func TestScaleUpCordonedNodesWithPods(t *testing.T) {
 	assert.Equal(t, int64(0), mock.size)
 }
 
-func TestScaleDownCordonNodes(t *testing.T) {
+func TestScaleDownCordonTwoNodes(t *testing.T) {
 	nodes := newNodeListFixture(nlConfig{count: 2, cpu: []string{"5.0", "5.0"}})
 
 	cs := &fake.Clientset{}
@@ -204,3 +204,5 @@ func TestScaleDownCordonNodes(t *testing.T) {
 	assert.Equal(t, 1, len(nl.availableNodes()))
 	assert.Equal(t, "node0", nl.nodes.Items[0].Name)
 }
+
+// TODO: write a test with 3 nodes, and no pods

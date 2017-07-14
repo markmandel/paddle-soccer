@@ -114,7 +114,7 @@ func (np *NodePool) nodeInstanceGroup(n v1.Node, client *http.Client) (string, e
 		return "", errors.Wrapf(err, "Could not get node pool details from cluster %v, nodepool %v", clusterName, npName)
 	}
 
-	// Response: "https://www.googleapis.com/compute/v1/projects/unity-1355/zones/us-west1-b/instanceGroupManagers/gke-soccer-us-west-game-servers-60789234-grp"}
+	// Response: "https://www.googleapis.com/compute/v1/projects/unity-1355/zones/us-west1-b/instanceGroupManagers/gke-soccer-us-west-game-servers-60789234-grp"
 	if len(nodePool.InstanceGroupUrls) == 0 {
 		return "", errors.Errorf("Could not determine instance group for node: %v", n.Name)
 	}
