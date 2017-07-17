@@ -205,4 +205,38 @@ func TestScaleDownCordonTwoNodes(t *testing.T) {
 	assert.Equal(t, "node0", nl.nodes.Items[0].Name)
 }
 
-// TODO: write a test with 3 nodes, and no pods
+func TestScaleDownCordonThreeNodes(t *testing.T) {
+	nodes := newNodeListFixture(nlConfig{count: 3, cpu: []string{"5.0", "5.0", "5.0"}})
+
+	cs := &fake.Clientset{}
+	defaultListNodeReactor(cs, nodes)
+	defaultUpdateNodeReactor(cs, nodes)
+
+	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	assert.Nil(t, err)
+	s.cs = cs
+
+	// gate - make sure everything is correct
+	nl, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, 3, len(nl.availableNodes()))
+	assert.Equal(t, 0, len(nl.cordonedNodes()))
+
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	// should only be 1 left, and now 2 should be cordoned
+	nl, err = s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(nl.availableNodes()))
+	assert.Equal(t, 2, len(nl.cordonedNodes()))
+
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	// make sure everything stays the same when running scaling again
+	nl2, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, nl.availableNodes(), nl2.availableNodes())
+	assert.Equal(t, nl.cordonedNodes(), nl2.cordonedNodes())
+}
