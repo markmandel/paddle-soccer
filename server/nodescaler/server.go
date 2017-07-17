@@ -46,29 +46,32 @@ type Server struct {
 	// nodePool management implementation.
 	// for now, there is just GKE
 	nodePool NodePool
-	// Duration between each tick for the node checl.
-	tickDuration time.Duration
+	// Duration between each tick for the node check.
+	tick time.Duration
+	// shutdown is the time from when a node is cordoned to when it can be shut down when empty
+	shutdown time.Duration
 }
 
 // handler is the extended http.HandleFunc to provide context for this application
 type handler func(*Server, http.ResponseWriter, *http.Request) error
 
+// Option is an functional option for the server
+type Option func(*Server)
+
 // NewServer returns the HTTP Server instance
 // `nodeSelector` is a k8s selector for what nodes to manage
 // `cpuRequest` is the cpu capacity requested for each server
-// `bufferCount``is the number of cpuRequest to make sure is available
-// `tickDuration` is the time required for each tick between checks.
-// at and given moment in the cluster
-func NewServer(hostAddr, nodeSelector string, cpuRequest string, bufferCount int64, tickDuration time.Duration) (*Server, error) {
-	log.Printf("[Info][Server] Starting server version %v on port %v, managing node selector %v and tick count of %v",
-		Version, hostAddr, nodeSelector, tickDuration)
+func NewServer(hostAddr, nodeSelector, cpuRequest string, opts ...Option) (*Server, error) {
+	log.Printf("[Info][Server] Creating a server version %v on port %v, managing node selector %v",
+		Version, hostAddr, nodeSelector)
 
 	q, err := resource.ParseQuantity(cpuRequest)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Could not parse cpu resource request: %v", cpuRequest)
 	}
 
-	s := &Server{nodeSelector: nodeSelector, cpuRequest: q.MilliValue(), bufferCount: bufferCount, tickDuration: tickDuration}
+	s := &Server{nodeSelector: nodeSelector, cpuRequest: q.MilliValue(),
+		bufferCount: 5, tick: 10 * time.Second, shutdown: time.Minute}
 	r := s.newHandler()
 
 	s.srv = &http.Server{
@@ -77,7 +80,34 @@ func NewServer(hostAddr, nodeSelector string, cpuRequest string, bufferCount int
 	}
 	s.clock = clockwork.NewRealClock()
 
+	for _, o := range opts {
+		o(s)
+	}
+
+	log.Printf("[Info][Server] bufferCount: %v, tick: %v, shutdown: %v", s.bufferCount, s.tick, s.shutdown)
+
 	return s, nil
+}
+
+// ServerBufferCount sets the number of cpuRequest to make sure is available at all times. Defaults to 5
+func ServerBufferCount(bc int64) Option {
+	return func(s *Server) {
+		s.bufferCount = bc
+	}
+}
+
+// ServerTick is the time required for each tick between checks. Defaults to 10s
+func ServerTick(td time.Duration) Option {
+	return func(s *Server) {
+		s.tick = td
+	}
+}
+
+// ServerShutdown is the time from when a node is cordoned to when it can be shut down (when empty). Defaults to 1min
+func ServerShutdown(sd time.Duration) Option {
+	return func(s *Server) {
+		s.shutdown = sd
+	}
 }
 
 // Start starts the HTTP server on the given port
@@ -111,7 +141,7 @@ func (s *Server) Start() error {
 
 	go func() {
 		log.Print("[Info][Start] Starting node scaling...")
-		tick := time.Tick(s.tickDuration)
+		tick := time.Tick(s.tick)
 
 		for {
 			select {

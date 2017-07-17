@@ -18,7 +18,6 @@ package main
 import (
 	"log"
 	"os"
-
 	"strconv"
 
 	"time"
@@ -46,9 +45,14 @@ const (
 	// to ensure there is space for new servers.
 	bufferCountEnv = "BUFFER_COUNT"
 
-	// tickSecondsEnv is the environment variable to tell
-	// the scaler how many seconds between each check
-	tickerSecondEnv = "TICK_SECOND"
+	// tickEnv is the environment variable to tell
+	// the scaler the duration between each check
+	tickerEnv = "TICK"
+
+	// shutDownNodeEnv is the environment variable to tell
+	// the scaler how long after a node is cordoned, should it be shut down
+	// (once it is empty)
+	shutDownNodeEnv = "SHUTDOWN_NODE"
 )
 
 // main function for starting the server
@@ -62,18 +66,33 @@ func main() {
 
 	log.Print("[Info][Main] Creating server...")
 
-	bufferCount, err := strconv.Atoi(os.Getenv(bufferCountEnv))
-	if err != nil {
-		log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", bufferCountEnv, os.Getenv(bufferCountEnv), err)
+	var opts []nodescaler.Option
+
+	if bc := os.Getenv(bufferCountEnv); bc != "" {
+		bufferCount, err := strconv.Atoi(bc)
+		if err != nil {
+			log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", bufferCountEnv, os.Getenv(bufferCountEnv), err)
+		}
+		opts = append(opts, nodescaler.ServerBufferCount(int64(bufferCount)))
 	}
 
-	tickSecond, err := strconv.Atoi(os.Getenv(tickerSecondEnv))
-	if err != nil {
-		log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", tickerSecondEnv, os.Getenv(tickerSecondEnv), err)
+	if t := os.Getenv(tickerEnv); t != "" {
+		tick, err := time.ParseDuration(t)
+		if err != nil {
+			log.Fatalf("[Error][Main] Error parsing %v value of %v, %v", tickerEnv, t, err)
+		}
+		opts = append(opts, nodescaler.ServerTick(tick))
 	}
 
-	s, err := nodescaler.NewServer(":"+port, os.Getenv(nodeSelectorEnv), os.Getenv(cpuRequestEnv),
-		int64(bufferCount), time.Duration(tickSecond)*time.Second)
+	if sd := os.Getenv(shutDownNodeEnv); sd != "" {
+		shutDown, err := time.ParseDuration(sd)
+		if err != nil {
+			log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", shutDownNodeEnv, sd, err)
+		}
+		opts = append(opts, nodescaler.ServerShutdown(shutDown))
+	}
+
+	s, err := nodescaler.NewServer(":"+port, os.Getenv(nodeSelectorEnv), os.Getenv(cpuRequestEnv), opts...)
 	if err != nil {
 		log.Fatalf("[Error][Main] %+v", err)
 	}

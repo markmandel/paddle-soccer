@@ -17,6 +17,8 @@ package nodescaler
 import (
 	"sync"
 
+	"time"
+
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -210,4 +212,12 @@ func (s *Server) cordon(n *v1.Node, unscheduled bool) error {
 	n.ObjectMeta.Annotations[timestampAnnotation] = string(now)
 	_, err = s.cs.CoreV1().Nodes().Update(n)
 	return errors.Wrapf(err, "Error Updating Node %#v", n)
+}
+
+// cordonTimestamp returns the timestamp for when the node was cordoned
+func cordonTimestamp(n v1.Node) (time.Time, error) {
+	var ts time.Time
+	err := ts.UnmarshalText([]byte(n.ObjectMeta.Annotations[timestampAnnotation]))
+
+	return ts, errors.Wrapf(err, "Error unmarshalling the timestamp annotation from the node: %v", n.Name)
 }

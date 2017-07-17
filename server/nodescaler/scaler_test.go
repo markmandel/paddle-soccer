@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jonboulle/clockwork"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
@@ -41,6 +42,12 @@ func (npm *NodePoolMock) IncreaseToSize(size int64) error {
 	return nil
 }
 
+// DeleteNode mock
+func (npm *NodePoolMock) DeleteNodes(nodes []v1.Node) error {
+	npm.size -= int64(len(nodes))
+	return nil
+}
+
 func TestScaleUpNodes(t *testing.T) {
 	t.Parallel()
 
@@ -50,7 +57,7 @@ func TestScaleUpNodes(t *testing.T) {
 	cs := &fake.Clientset{}
 	defaultListNodeReactor(cs, nodes)
 
-	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	s, err := NewServer("", "app=game-server", "0.5", ServerBufferCount(5))
 	assert.Nil(t, err)
 	s.cs = cs
 
@@ -62,7 +69,7 @@ func TestScaleUpNodes(t *testing.T) {
 	assert.Equal(t, expected, mock.size)
 	assertAllUnscheduled(t, nodes)
 
-	pl1 := newPodListFixture([]string{"0.5", "0.3"})
+	pl1 := newPodListFixture([]string{"0.5", "0.3"}, false)
 	cs.AddReactor("list", "pods", func(a core.Action) (bool, runtime.Object, error) {
 		if a.(core.ListAction).GetListRestrictions().Fields.String() == "spec.nodeName=node0" {
 			return true, pl1, nil
@@ -76,7 +83,7 @@ func TestScaleUpNodes(t *testing.T) {
 	assert.Equal(t, expected, mock.size)
 	assertAllUnscheduled(t, nodes)
 
-	pl2 := newPodListFixture([]string{"1.8"})
+	pl2 := newPodListFixture([]string{"1.8"}, false)
 	cs.AddReactor("list", "pods", func(a core.Action) (bool, runtime.Object, error) {
 		if a.(core.ListAction).GetListRestrictions().Fields.String() == "spec.nodeName=node1" {
 			return true, pl2, nil
@@ -106,7 +113,7 @@ func TestScaleUpCordonedNodesNoPods(t *testing.T) {
 
 	// use a size of 0, as a way to ensure this doesn't get called.
 	mock := &NodePoolMock{size: 0}
-	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	s, err := NewServer("", "app=game-server", "0.5", ServerBufferCount(5))
 	assert.Nil(t, err)
 	s.cs = cs
 	s.nodePool = mock
@@ -122,7 +129,7 @@ func TestScaleUpCordonedNodesNoPods(t *testing.T) {
 	nodes.Items[1].Spec.Unschedulable = true
 
 	mock = &NodePoolMock{size: 0}
-	s, err = NewServer("", "app=game-server", "0.5", 5, time.Second)
+	s, err = NewServer("", "app=game-server", "0.5", ServerBufferCount(5))
 	assert.Nil(t, err)
 	cs = &fake.Clientset{}
 	defaultListNodeReactor(cs, nodes)
@@ -140,11 +147,12 @@ func TestScaleUpCordonedNodesNoPods(t *testing.T) {
 }
 
 func TestScaleUpCordonedNodesWithPods(t *testing.T) {
+	t.Parallel()
 	// we fake pods, by manipulating the allocatable value
 	nodes := newNodeListFixture(nlConfig{count: 3, cpu: []string{"2.0", "2.0", "2.0"}})
 	nodes.Items[0].Spec.Unschedulable = true
 	nodes.Items[1].Spec.Unschedulable = true
-	pods := newPodListFixture([]string{"0.5"})
+	pods := newPodListFixture([]string{"0.5"}, false)
 
 	cs := &fake.Clientset{}
 	defaultListNodeReactor(cs, nodes)
@@ -153,7 +161,7 @@ func TestScaleUpCordonedNodesWithPods(t *testing.T) {
 
 	// use a size of 0, as a way to ensure this doesn't get called.
 	mock := &NodePoolMock{size: 0}
-	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	s, err := NewServer("", "app=game-server", "0.5", ServerBufferCount(5))
 	assert.Nil(t, err)
 	s.cs = cs
 	s.nodePool = mock
@@ -167,15 +175,18 @@ func TestScaleUpCordonedNodesWithPods(t *testing.T) {
 }
 
 func TestScaleDownCordonTwoNodes(t *testing.T) {
+	t.Parallel()
 	nodes := newNodeListFixture(nlConfig{count: 2, cpu: []string{"5.0", "5.0"}})
 
 	cs := &fake.Clientset{}
 	defaultListNodeReactor(cs, nodes)
 	defaultUpdateNodeReactor(cs, nodes)
+	mock := &NodePoolMock{size: 0}
 
-	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	s, err := NewServer("", "app=game-server", "0.5", ServerBufferCount(5))
 	assert.Nil(t, err)
 	s.cs = cs
+	s.nodePool = mock
 
 	// Make sure at least one of them is unscheduled
 	err = s.scaleNodes()
@@ -185,6 +196,7 @@ func TestScaleDownCordonTwoNodes(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(nl.availableNodes()))
 	assert.Equal(t, 1, len(nl.cordonedNodes()))
+	assert.EqualValues(t, 0, mock.size)
 
 	// reset nodes, and up their capacity to 6.0
 	for i, n := range nodes.Items {
@@ -193,7 +205,7 @@ func TestScaleDownCordonTwoNodes(t *testing.T) {
 		nodes.Items[i] = n
 	}
 
-	pl1 := newPodListFixture([]string{"0.5"})
+	pl1 := newPodListFixture([]string{"0.5"}, false)
 	defaultListPodReactor(cs, map[string]*v1.PodList{"node0": {}, "node1": pl1})
 
 	log.Printf("[Test][%v] Scaling down after resetting capacity to 6, and adding a single pod to node1.", t.Name())
@@ -203,18 +215,22 @@ func TestScaleDownCordonTwoNodes(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(nl.availableNodes()))
 	assert.Equal(t, "node0", nl.nodes.Items[0].Name)
+	assert.EqualValues(t, 0, mock.size)
 }
 
 func TestScaleDownCordonThreeNodes(t *testing.T) {
+	t.Parallel()
 	nodes := newNodeListFixture(nlConfig{count: 3, cpu: []string{"5.0", "5.0", "5.0"}})
 
 	cs := &fake.Clientset{}
 	defaultListNodeReactor(cs, nodes)
 	defaultUpdateNodeReactor(cs, nodes)
+	mock := &NodePoolMock{size: 0}
 
-	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	s, err := NewServer("", "app=game-server", "0.5", ServerBufferCount(5))
 	assert.Nil(t, err)
 	s.cs = cs
+	s.nodePool = mock
 
 	// gate - make sure everything is correct
 	nl, err := s.newNodeList()
@@ -224,6 +240,7 @@ func TestScaleDownCordonThreeNodes(t *testing.T) {
 
 	err = s.scaleNodes()
 	assert.Nil(t, err)
+	assert.EqualValues(t, 0, mock.size)
 
 	// should only be 1 left, and now 2 should be cordoned
 	nl, err = s.newNodeList()
@@ -239,4 +256,195 @@ func TestScaleDownCordonThreeNodes(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, nl.availableNodes(), nl2.availableNodes())
 	assert.Equal(t, nl.cordonedNodes(), nl2.cordonedNodes())
+	assert.EqualValues(t, 0, mock.size)
+}
+
+func TestRemoveNodeAfterCordonTwoNodesNoPods(t *testing.T) {
+	nodes := newNodeListFixture(nlConfig{count: 2, cpu: []string{"5.0", "5.0"}})
+	mock := &NodePoolMock{size: 2}
+	cs := &fake.Clientset{}
+	s, err := NewServer("", "app=game-server", "0.5", ServerBufferCount(5), ServerShutdown(time.Minute))
+	assert.Nil(t, err)
+	s.cs = cs
+	fc := clockwork.NewFakeClock()
+	s.clock = fc
+	s.nodePool = mock
+	defaultListNodeReactor(cs, nodes)
+	defaultUpdateNodeReactor(cs, nodes)
+	defaultDeleteNodeReactor(cs, nodes)
+
+	// Make sure at least one of them is unscheduled
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	nl, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(nl.availableNodes()))
+	assert.Equal(t, 1, len(nl.cordonedNodes()))
+	assert.EqualValues(t, 2, mock.size)
+
+	// forward 30 seconds, given the same set of pods, all should stay the same
+	fc.Advance(30 * time.Second)
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	// make sure everything stays the same when running scaling again
+	nl2, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, nl.availableNodes(), nl2.availableNodes())
+	assert.Equal(t, nl.cordonedNodes(), nl2.cordonedNodes())
+	assert.EqualValues(t, 2, mock.size)
+
+	// forward 31 seconds, then we should drop a node
+	fc.Advance(31 * time.Second)
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+	nl, err = s.newNodeList()
+	assert.Nil(t, err)
+
+	assert.Equal(t, 1, len(nl.nodes.Items), "There should be only one node left, the cordoned one should be deleted")
+	assert.Equal(t, nl.availableNodes(), nl2.availableNodes(), "The cordoned node should be the one deleted.")
+	assert.EqualValues(t, 1, mock.size, "A node should also be deleted")
+
+	// forward 30 seconds, given the same set of pods, all should stay the same
+	fc.Advance(30 * time.Second)
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	// make sure everything stays the same when running scaling again
+	nl2, err = s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, nl.availableNodes(), nl2.availableNodes())
+	assert.Equal(t, nl.cordonedNodes(), nl2.cordonedNodes())
+	assert.EqualValues(t, 1, mock.size)
+}
+
+func TestRemoveNodeAfterCordonTwoNodesWithNonGamePods(t *testing.T) {
+	nodes := newNodeListFixture(nlConfig{count: 2, cpu: []string{"5.0", "5.0"}})
+	mock := &NodePoolMock{size: 2}
+	cs := &fake.Clientset{}
+	s, err := NewServer("", "app=game-server", "0.5", ServerBufferCount(5), ServerShutdown(time.Minute))
+	assert.Nil(t, err)
+	s.cs = cs
+	fc := clockwork.NewFakeClock()
+	s.clock = fc
+	s.nodePool = mock
+	defaultListNodeReactor(cs, nodes)
+	defaultUpdateNodeReactor(cs, nodes)
+	defaultDeleteNodeReactor(cs, nodes)
+	// add pods to both nodes, but they are non-game pods - everything should run the same.
+	pl1 := newPodListFixture([]string{"0.5"}, false)
+	defaultListPodReactor(cs, map[string]*v1.PodList{"node0": pl1, "node1": pl1})
+
+	// Make sure at least one of them is unscheduled
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	nl, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(nl.availableNodes()))
+	assert.Equal(t, 1, len(nl.cordonedNodes()))
+	assert.EqualValues(t, 2, mock.size)
+
+	// forward 30 seconds, given the same set of pods, all should stay the same
+	fc.Advance(30 * time.Second)
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	// make sure everything stays the same when running scaling again
+	nl2, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, nl.availableNodes(), nl2.availableNodes())
+	assert.Equal(t, nl.cordonedNodes(), nl2.cordonedNodes())
+	assert.EqualValues(t, 2, mock.size)
+
+	// forward 31 seconds, then we should drop a node
+	fc.Advance(31 * time.Second)
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+	nl, err = s.newNodeList()
+	assert.Nil(t, err)
+
+	assert.Equal(t, 1, len(nl.nodes.Items), "There should be only one node left, the cordoned one should be deleted")
+	assert.Equal(t, nl.availableNodes(), nl2.availableNodes(), "The cordoned node should be the one deleted.")
+	assert.EqualValues(t, 1, mock.size, "A node should also be deleted")
+
+	// forward 30 seconds, given the same set of pods, all should stay the same
+	fc.Advance(30 * time.Second)
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	// make sure everything stays the same when running scaling again
+	nl2, err = s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, nl.availableNodes(), nl2.availableNodes())
+	assert.Equal(t, nl.cordonedNodes(), nl2.cordonedNodes())
+	assert.EqualValues(t, 1, mock.size)
+}
+
+func TestDoNotRemoveNodeAfterCordonTwoNodsWithPod(t *testing.T) {
+	nodes := newNodeListFixture(nlConfig{count: 2, cpu: []string{"5.0", "5.0"}})
+	mock := &NodePoolMock{size: 2}
+	cs := &fake.Clientset{}
+	s, err := NewServer("", "app=game-server", "0.5", ServerBufferCount(5), ServerShutdown(time.Minute))
+	assert.Nil(t, err)
+	s.cs = cs
+	fc := clockwork.NewFakeClock()
+	s.clock = fc
+	s.nodePool = mock
+
+	p0 := newPodListFixture([]string{"0.5"}, true)
+	p1 := newPodListFixture([]string{"0.5"}, true)
+
+	defaultListNodeReactor(cs, nodes)
+	defaultUpdateNodeReactor(cs, nodes)
+	defaultDeleteNodeReactor(cs, nodes)
+	defaultListPodReactor(cs, map[string]*v1.PodList{"node0": p0, "node1": p1})
+
+	// Make sure at least one of them is unscheduled
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	nl, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(nl.availableNodes()))
+	assert.Equal(t, 1, len(nl.cordonedNodes()))
+	assert.EqualValues(t, 2, mock.size)
+
+	// forward 30 seconds, given the same set of pods, all should stay the same
+	fc.Advance(30 * time.Second)
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	// make sure everything stays the same when running scaling again
+	nl2, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, nl.availableNodes(), nl2.availableNodes())
+	assert.Equal(t, nl.cordonedNodes(), nl2.cordonedNodes())
+	assert.EqualValues(t, 2, mock.size)
+
+	// forward 31 seconds, all should also stay the same
+	fc.Advance(31 * time.Second)
+	err = s.scaleNodes()
+	nl2, err = s.newNodeList()
+	assert.Nil(t, err)
+	assert.Nil(t, err)
+	assert.Equal(t, nl.availableNodes(), nl2.availableNodes())
+	assert.Equal(t, nl.cordonedNodes(), nl2.cordonedNodes())
+	assert.EqualValues(t, 2, mock.size)
+}
+
+func TestFilterGameSessionPods(t *testing.T) {
+	// none of these have sessions=game as a label
+	pods := newPodListFixture([]string{"0.5", "0.3", "0.2"}, false)
+	result := filterGameSessionPods(pods.Items)
+	assert.Equal(t, 0, len(result))
+
+	labels := map[string]string{"sessions": "game"}
+	pods.Items[0].ObjectMeta.Labels = labels
+	pods.Items[1].ObjectMeta.Labels = labels
+
+	result = filterGameSessionPods(pods.Items)
+	assert.Equal(t, 2, len(result))
+	assert.Equal(t, pods.Items[0:2], result)
 }

@@ -17,7 +17,6 @@ package nodescaler
 import (
 	"log"
 	"testing"
-	"time"
 
 	"github.com/jonboulle/clockwork"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +30,7 @@ import (
 func TestSumCPUResourceRequests(t *testing.T) {
 	t.Parallel()
 	nl := newNodeListFixture(nlConfig{count: 2, cpu: []string{"4.0", "4.0"}})
-	pods := newPodListFixture([]string{"0.5", "0.3"})
+	pods := newPodListFixture([]string{"0.5", "0.3"}, false)
 	fnl := nodeList{nodes: nl, pods: map[string]*v1.PodList{"node0": pods, "node1": {}}, cpuRequest: 500}
 
 	expected := resource.MustParse("0.8")
@@ -45,11 +44,11 @@ func TestNewNodeList(t *testing.T) {
 	nodes := newNodeListFixture(nlConfig{count: 2, cpu: []string{"4.0", "4.0"}})
 	log.Printf("Nodes: %#v", nodes)
 
-	pl1 := newPodListFixture([]string{"0.5", "0.3"})
-	pl2 := newPodListFixture([]string{"1.2"})
+	pl1 := newPodListFixture([]string{"0.5", "0.3"}, false)
+	pl2 := newPodListFixture([]string{"1.2"}, false)
 
 	cs := &fake.Clientset{}
-	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	s, err := NewServer("", "app=game-server", "0.5")
 	assert.Nil(t, err)
 	s.cs = cs
 	defaultListNodeReactor(cs, nodes)
@@ -108,7 +107,7 @@ func TestCpuRequestsAvailable(t *testing.T) {
 	nodes := newNodeListFixture(nlConfig{count: 2, cpu: []string{"2.0", "2.0"}})
 
 	cs := &fake.Clientset{}
-	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	s, err := NewServer("", "app=game-server", "0.5")
 	assert.Nil(t, err)
 	s.cs = cs
 	defaultListNodeReactor(cs, nodes)
@@ -118,8 +117,8 @@ func TestCpuRequestsAvailable(t *testing.T) {
 	count := nl.cpuRequestsAvailable()
 	assert.Equal(t, int64(8), count)
 
-	pl1 := newPodListFixture([]string{"0.5", "0.3"})
-	pl2 := newPodListFixture([]string{"1.8"})
+	pl1 := newPodListFixture([]string{"0.5", "0.3"}, false)
+	pl2 := newPodListFixture([]string{"1.8"}, false)
 	defaultListPodReactor(cs, map[string]*v1.PodList{"node0": pl1, "node1": pl2})
 	nl, err = s.newNodeList()
 	assert.Nil(t, err)
@@ -155,7 +154,7 @@ func TestCordon(t *testing.T) {
 
 	nodes := newNodeListFixture(nlConfig{count: 1, cpu: []string{"2.0"}})
 	cs := &fake.Clientset{}
-	s, err := NewServer("", "app=game-server", "0.5", 5, time.Second)
+	s, err := NewServer("", "app=game-server", "0.5")
 	assert.Nil(t, err)
 	s.cs = cs
 	s.clock = clockwork.NewFakeClock()
@@ -166,8 +165,7 @@ func TestCordon(t *testing.T) {
 	err = s.cordon(&node, true)
 	assert.Nil(t, err)
 	assert.True(t, node.Spec.Unschedulable)
-	var ts time.Time
-	err = ts.UnmarshalText([]byte(node.ObjectMeta.Annotations[timestampAnnotation]))
+	ts, err := cordonTimestamp(node)
 	assert.Nil(t, err)
 	assert.Equal(t, ts, s.clock.Now())
 
@@ -179,7 +177,7 @@ func TestCordon(t *testing.T) {
 	err = s.cordon(&node, false)
 	assert.Nil(t, err)
 	assert.False(t, node.Spec.Unschedulable)
-	err = ts.UnmarshalText([]byte(node.ObjectMeta.Annotations[timestampAnnotation]))
+	ts, err = cordonTimestamp(node)
 	assert.Nil(t, err)
 	assert.Equal(t, ts, s.clock.Now())
 

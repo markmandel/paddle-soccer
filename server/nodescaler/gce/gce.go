@@ -15,6 +15,7 @@
 package gce
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -91,6 +92,28 @@ func (np *NodePool) IncreaseToSize(size int64) error {
 		return errors.Wrapf(err, "Error resizing %v to size %v", np.instanceGroup, size)
 	}
 
+	return nil
+}
+
+// DeleteNode deletes a set of nodes from the nodepool
+func (np *NodePool) DeleteNodes(nodes []v1.Node) error {
+	if len(nodes) == 0 {
+		log.Printf("[Info][DeleteNodes] No nodes to delete")
+		return nil
+	}
+
+	req := &compute.InstanceGroupManagersDeleteInstancesRequest{}
+
+	for _, n := range nodes {
+		req.Instances = append(req.Instances, fmt.Sprintf("zones/%s/instances/%s", np.zone, n.Labels["kubernetes.io/hostname"]))
+	}
+
+	log.Printf("[Info][DeleteNodes] Deleting nodes: %v", req.Instances)
+
+	_, err := np.instanceGroupService.DeleteInstances(np.project, np.zone, np.instanceGroup, req).Do()
+	if err != nil {
+		return errors.Wrapf(err, "Error deleting nodes: %#v", req)
+	}
 	return nil
 }
 

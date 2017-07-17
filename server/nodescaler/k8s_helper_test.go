@@ -59,6 +59,26 @@ func defaultListNodeReactor(cs *fake.Clientset, target *v1.NodeList) {
 	})
 }
 
+// defaultDeleteNodeReactor adds the default delete-node reactor to the fake.Clientset
+func defaultDeleteNodeReactor(cs *fake.Clientset, target *v1.NodeList) {
+	cs.AddReactor("delete", "nodes", func(a core.Action) (bool, runtime.Object, error) {
+		da := a.(core.DeleteAction)
+		name := da.GetName()
+		replace := []v1.Node{}
+
+		for _, n := range target.Items {
+			if n.Name == name {
+				log.Printf("[Debug][UpdateNode] deleting node: %#v", n)
+			} else {
+				replace = append(replace, n)
+			}
+		}
+
+		target.Items = replace
+		return true, target, nil
+	})
+}
+
 type nlConfig struct {
 	count int
 	cpu   []string
@@ -93,9 +113,10 @@ func assertAllUnscheduled(t *testing.T, nodes *v1.NodeList) {
 }
 
 // newPodListFixture returns a standard pod list, for each cpu resource
-// value provided.
-func newPodListFixture(cpu []string) *v1.PodList {
+// value provided. isGame defines if it gets the labels as a game pod would
+func newPodListFixture(cpu []string, isGame bool) *v1.PodList {
 	result := &v1.PodList{}
+	labels := map[string]string{"sessions": "game"}
 
 	for i, c := range cpu {
 		pod := v1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "pod" + strconv.Itoa(i), Namespace: "default"},
@@ -103,6 +124,9 @@ func newPodListFixture(cpu []string) *v1.PodList {
 				Containers: []v1.Container{
 					{Resources: v1.ResourceRequirements{
 						Limits: v1.ResourceList{v1.ResourceCPU: resource.MustParse(c)}}}}}}
+		if isGame {
+			pod.ObjectMeta.Labels = labels
+		}
 
 		result.Items = append(result.Items, pod)
 	}

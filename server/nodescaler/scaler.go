@@ -19,6 +19,7 @@ import (
 	"math"
 	"sort"
 
+	"github.com/pkg/errors"
 	"k8s.io/client-go/pkg/api/v1"
 )
 
@@ -29,9 +30,13 @@ type NodePool interface {
 	// Increase the node pool to a given size.
 	// Should ignore requests to make the nodepool smaller
 	IncreaseToSize(int64) error
+
+	// Delete specific nodes in the cluster
+	DeleteNodes(nodes []v1.Node) error
 }
 
 // scale scales nodes up and down, depending on CPU constraints
+// this includes adding nodes, cordoning them as well as deleting them
 func (s Server) scaleNodes() error {
 	nl, err := s.newNodeList()
 	if err != nil {
@@ -53,12 +58,19 @@ func (s Server) scaleNodes() error {
 		}
 		// recalculate
 		available = nl.cpuRequestsAvailable()
-		return s.increaseNodes(nl, s.bufferCount-available)
+		err = s.increaseNodes(nl, s.bufferCount-available)
+		if err != nil {
+			return err
+		}
+
 	} else if s.bufferCount < available {
-		return s.cordonNodes(nl, available-s.bufferCount)
+		err := s.cordonNodes(nl, available-s.bufferCount)
+		if err != nil {
+			return err
+		}
 	}
 
-	return nil
+	return s.deleteCordonedNodes()
 }
 
 // increaseNodes increases the size of the managed nodepool
@@ -164,11 +176,54 @@ func (s Server) cordonNodes(nl *nodeList, gameNumber int64) error {
 	for _, n := range cNodes {
 		log.Printf("[Info][CordonNodes] Cordoning node: %v", n.Name)
 		err := s.cordon(&n, true)
-		log.Printf("[Debug][CordonNodes] Status: %v, %v", n.Name, n.Spec.Unschedulable)
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// deleteCordonedNodes will delete a cordoned node if it
+// the time since it was cordoned has expired
+func (s Server) deleteCordonedNodes() error {
+	nl, err := s.newNodeList()
+	if err != nil {
+		return err
+	}
+
+	var dn []v1.Node
+	for _, n := range nl.cordonedNodes() {
+		ct, err := cordonTimestamp(n)
+		if err != nil {
+			return err
+		}
+
+		pl := nl.nodePods(n)
+		// if no game session pods && if they have passed expiry, then delete them
+		if len(filterGameSessionPods(pl.Items)) == 0 && ct.Add(s.shutdown).Before(s.clock.Now()) {
+			err := s.cs.CoreV1().Nodes().Delete(n.Name, nil)
+			if err != nil {
+				return errors.Wrapf(err, "Error deleting cordoned node: %v", n.Name)
+			}
+			dn = append(dn, n)
+		}
+	}
+
+	return s.nodePool.DeleteNodes(dn)
+}
+
+// filterGameSessionPods only returns pods that are for
+// game server sessions
+func filterGameSessionPods(pl []v1.Pod) []v1.Pod {
+	var result []v1.Pod
+
+	for _, p := range pl {
+		// This is defined in the sessions game creation code
+		if v, ok := p.ObjectMeta.Labels["sessions"]; ok && v == "game" {
+			result = append(result, p)
+		}
+	}
+
+	return result
 }
