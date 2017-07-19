@@ -15,6 +15,7 @@ Once the game server has started, we use the combination of the Kubernetes API a
 ## Blog Posts
 
 - [Scaling Dedicated Game Servers with Kubernetes: Part 1 - Containerising and Deploying](http://www.compoundtheory.com/scaling-dedicated-game-servers-with-kubernetes-part-1-containerising-and-deploying/)
+- [Scaling Dedicated Game Servers with Kubernetes: Part 2 – Managing CPU and Memory](http://www.compoundtheory.com/scaling-dedicated-game-servers-with-kubernetes-part-2-managing-cpu-and-memory/)
 
 ## Presentations
 [![GDC Presentation](gdc.jpg)](http://www.gdcvault.com/play/1024328/)
