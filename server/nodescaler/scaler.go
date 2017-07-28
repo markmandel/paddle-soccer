@@ -43,6 +43,11 @@ func (s Server) scaleNodes() error {
 		return err
 	}
 
+	// always make sure there is the min number of nodes
+	if int64(len(nl.nodes.Items)) < s.minNodeNumber {
+		return s.nodePool.IncreaseToSize(s.minNodeNumber)
+	}
+
 	available := nl.cpuRequestsAvailable()
 	log.Printf("[Info][scaleNodes] CPU Requests blocks of %vm. Available: %v. Requires a buffer of %v", s.cpuRequest, available, s.bufferCount)
 	if available < s.bufferCount {
@@ -93,7 +98,14 @@ func (s Server) increaseNodes(nl *nodeList, gameNumber int64) error {
 	diff := int64(math.Ceil(float64(cpuRequest) / float64(capacity.MilliValue())))
 	log.Printf("[Info][increaseNodes] Adding %v nodes to the node pool", diff)
 
-	return s.nodePool.IncreaseToSize(int64(len(nl.availableNodes())) + diff)
+	size := int64(len(nl.availableNodes())) + diff
+
+	// don't you dare go over the max node number!
+	if size > s.maxNodeNumber {
+		size = s.maxNodeNumber
+	}
+
+	return s.nodePool.IncreaseToSize(size)
 }
 
 // uncordonNodes searches through all the available nodes and uncordons
@@ -192,6 +204,12 @@ func (s Server) deleteCordonedNodes() error {
 		return err
 	}
 
+	l := int64(len(nl.nodes.Items))
+	if l <= s.minNodeNumber {
+		log.Print("[Info][deleteCordonedNodes] Already at minimum node count. exiting")
+		return nil
+	}
+
 	var dn []v1.Node
 	for _, n := range nl.cordonedNodes() {
 		ct, err := cordonTimestamp(n)
@@ -207,6 +225,10 @@ func (s Server) deleteCordonedNodes() error {
 				return errors.Wrapf(err, "Error deleting cordoned node: %v", n.Name)
 			}
 			dn = append(dn, n)
+			// don't delete more nodes than the minimum number set
+			if l--; l <= s.minNodeNumber {
+				break
+			}
 		}
 	}
 

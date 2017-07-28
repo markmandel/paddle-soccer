@@ -48,6 +48,25 @@ func (npm *NodePoolMock) DeleteNodes(nodes []v1.Node) error {
 	return nil
 }
 
+func TestEnsureMinimumNumberOfNodes(t *testing.T) {
+	t.Parallel()
+
+	nodes := newNodeListFixture(nlConfig{count: 1, cpu: []string{"2.0"}})
+	cs := &fake.Clientset{}
+	defaultListNodeReactor(cs, nodes)
+
+	s, err := NewServer("", "app=game-server", "0.5", ServerMinNodeNumber(5))
+	assert.Nil(t, err)
+	s.cs = cs
+	mock := &NodePoolMock{size: 1}
+	s.nodePool = mock
+	assert.EqualValues(t, 1, mock.size)
+
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+	assert.EqualValues(t, 5, mock.size)
+}
+
 func TestScaleUpNodes(t *testing.T) {
 	t.Parallel()
 
@@ -96,6 +115,26 @@ func TestScaleUpNodes(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, int64(3), mock.size)
 	assertAllUnscheduled(t, nodes)
+}
+
+func TestScaleUpNodesToMax(t *testing.T) {
+	t.Parallel()
+
+	nodes := newNodeListFixture(nlConfig{count: 1, cpu: []string{"2.0"}})
+	assertAllUnscheduled(t, nodes)
+
+	cs := &fake.Clientset{}
+	defaultListNodeReactor(cs, nodes)
+
+	s, err := NewServer("", "app=game-server", "0.5", ServerBufferCount(500), ServerMaxNodeNumber(5))
+	assert.Nil(t, err)
+	s.cs = cs
+
+	mock := &NodePoolMock{size: 1}
+	s.nodePool = mock
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+	assert.EqualValues(t, 5, mock.size)
 }
 
 func TestScaleUpCordonedNodesNoPods(t *testing.T) {
@@ -432,6 +471,56 @@ func TestDoNotRemoveNodeAfterCordonTwoNodsWithPod(t *testing.T) {
 	assert.Equal(t, nl.availableNodes(), nl2.availableNodes())
 	assert.Equal(t, nl.cordonedNodes(), nl2.cordonedNodes())
 	assert.EqualValues(t, 2, mock.size)
+}
+
+func TestRemoveNodeWithMinimumNodeCount(t *testing.T) {
+	nodes := newNodeListFixture(nlConfig{count: 5, cpu: []string{"5.0", "5.0", "5.0", "5.0", "5.0"}})
+	mock := &NodePoolMock{size: 5}
+	cs := &fake.Clientset{}
+	s, err := NewServer("", "app=game-server", "0.5", ServerBufferCount(5), ServerShutdown(time.Minute), ServerMinNodeNumber(3))
+	assert.Nil(t, err)
+	s.cs = cs
+	fc := clockwork.NewFakeClock()
+	s.clock = fc
+	s.nodePool = mock
+	defaultListNodeReactor(cs, nodes)
+	defaultUpdateNodeReactor(cs, nodes)
+	defaultDeleteNodeReactor(cs, nodes)
+
+	// Make sure 4 of them is unscheduled
+	log.Print("[Debug][Test] Scaling nodes. Should cordon 4")
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	nl1, err := s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(nl1.availableNodes()))
+	assert.Equal(t, 4, len(nl1.cordonedNodes()))
+	assert.EqualValues(t, 5, mock.size)
+
+	// forward 61 seconds, then we should several nodes
+	fc.Advance(61 * time.Second)
+	log.Print("[Debug][Test] Forward 61 seconds, scaling. Should delete 2 nodes.")
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+	nl2, err := s.newNodeList()
+	assert.Nil(t, err)
+
+	assert.Equal(t, 3, len(nl2.nodes.Items), "There should be three left, as that is the in number")
+	assert.EqualValues(t, 3, mock.size, "Two nodes should also be deleted")
+
+	// forward 30 seconds, given the same set of pods, all should stay the same
+	fc.Advance(30 * time.Second)
+	log.Print("[Debug][Test] Going forward 30 seconds, and scaling nodes. All should be the same")
+	err = s.scaleNodes()
+	assert.Nil(t, err)
+
+	// make sure everything stays the same when running scaling again
+	nl1, err = s.newNodeList()
+	assert.Nil(t, err)
+	assert.Equal(t, nl1.availableNodes(), nl2.availableNodes())
+	assert.Equal(t, nl1.cordonedNodes(), nl2.cordonedNodes())
+	assert.EqualValues(t, 3, mock.size)
 }
 
 func TestFilterGameSessionPods(t *testing.T) {

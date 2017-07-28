@@ -53,6 +53,16 @@ const (
 	// the scaler how long after a node is cordoned, should it be shut down
 	// (once it is empty)
 	shutDownNodeEnv = "SHUTDOWN_NODE"
+
+	// minNodeEnv is the environment variable that controls what the
+	// minimum number of nodes in the cluster have to be at any given
+	// point and time
+	minNodeEnv = "MIN_NODE"
+
+	// maxNodeEnv is the environment variable that controls what the
+	// maximum number of nodes in the cluster have can be at any given
+	// point and time
+	maxNodeEnv = "MAX_NODE"
 )
 
 // main function for starting the server
@@ -69,11 +79,11 @@ func main() {
 	var opts []nodescaler.Option
 
 	if bc := os.Getenv(bufferCountEnv); bc != "" {
-		bufferCount, err := strconv.Atoi(bc)
+		bufferCount, err := strconv.ParseInt(bc, 10, 64)
 		if err != nil {
-			log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", bufferCountEnv, os.Getenv(bufferCountEnv), err)
+			log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", bufferCountEnv, bc, err)
 		}
-		opts = append(opts, nodescaler.ServerBufferCount(int64(bufferCount)))
+		opts = append(opts, nodescaler.ServerBufferCount(bufferCount))
 	}
 
 	if t := os.Getenv(tickerEnv); t != "" {
@@ -90,6 +100,22 @@ func main() {
 			log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", shutDownNodeEnv, sd, err)
 		}
 		opts = append(opts, nodescaler.ServerShutdown(shutDown))
+	}
+
+	if min := os.Getenv(minNodeEnv); min != "" {
+		count, err := strconv.ParseInt(min, 10, 64)
+		if err != nil {
+			log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", minNodeEnv, min, err)
+		}
+		opts = append(opts, nodescaler.ServerMinNodeNumber(int64(count)))
+	}
+
+	if max := os.Getenv(maxNodeEnv); max != "" {
+		count, err := strconv.ParseInt(max, 10, 64)
+		if err != nil {
+			log.Fatalf("[Error][Main] Error decoding %v value of %v, %v", maxNodeEnv, max, err)
+		}
+		opts = append(opts, nodescaler.ServerMaxNodeNumber(int64(count)))
 	}
 
 	s, err := nodescaler.NewServer(":"+port, os.Getenv(nodeSelectorEnv), os.Getenv(cpuRequestEnv), opts...)

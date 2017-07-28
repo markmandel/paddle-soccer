@@ -4,6 +4,8 @@ metadata:
   name: nodescaler
 spec:
   replicas: 1 # only want one - because it's on it's own loop to scale up and down nodes
+  strategy:
+    type: Recreate
   template:
     metadata:
       labels:
@@ -33,3 +35,7 @@ spec:
             value: "10s"
           - name: SHUTDOWN_NODE
             value: "20s"
+          - name: MIN_NODE
+            value: "1"
+          - name: MAX_NODE
+            value: "15"

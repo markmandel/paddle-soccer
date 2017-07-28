@@ -55,4 +55,20 @@ func TestServerOptions(t *testing.T) {
 		assert.Nil(t, err)
 		assert.EqualValues(t, st, s.tick.Seconds())
 	}
+
+	// property based test for min nodes
+	for i := 0; i < 20; i++ {
+		nc := rand.Int63nRange(1, 100)
+		s, err := NewServer("", sel, cpuRequest, ServerMinNodeNumber(nc))
+		assert.Nil(t, err)
+		assert.Equal(t, nc, s.minNodeNumber)
+	}
+
+	// property based test for max nodes
+	for i := 0; i < 20; i++ {
+		nc := rand.Int63nRange(1, 100)
+		s, err := NewServer("", sel, cpuRequest, ServerMaxNodeNumber(nc))
+		assert.Nil(t, err)
+		assert.Equal(t, nc, s.maxNodeNumber)
+	}
 }
