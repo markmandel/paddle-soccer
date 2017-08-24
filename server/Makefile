@@ -55,9 +55,10 @@ kubectl-proxy:
 # install weavescope, for nicer visualisations
 # https://www.weave.works/docs/scope/latest/installing/#k8s
 install-weavescope:
-	kubectl apply -f https://cloud.weave.works/launch/k8s/weavescope.yaml?k8s-service-type=LoadBalancer&v=1.3.0
+	-kubectl apply --namespace kube-system -f "https://cloud.weave.works/k8s/scope.yaml?k8s-service-type=LoadBalancer&k8s-version=$$(kubectl version | base64 | tr -d '\n')"
+	#kubectl apply -f https://cloud.weave.works/launch/k8s/weavescope.yaml?k8s-service-type=LoadBalancer&v=1.3.0
 	sleep 5
-	kubectl edit deployment weave-scope-app
+	kubectl edit deployment weave-scope-app --namespace kube-system
 
 # delete everything from k8s
 clean-k8s:
