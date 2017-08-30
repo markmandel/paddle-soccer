@@ -72,9 +72,8 @@ To deploy, run `make deploy-all` and it will deploy the Redis Stateful Set, and 
 ### NodeScaler
 
 The `nodescaler` folder contains a Go application that tracks resource usage within the `game-server` node pool and
-increases the number of nodes if the amount of CPU space available falls below a certain buffer value.
-
-Note: Scaling nodes down will be implemented soon.
+increases the number of nodes if the amount of CPU space available falls below a certain buffer value. Once the buffer is exceeded, the node scaler will first cordon nodes that have game servers
+still running on them, and then eventually delete them once they are empty of running dedicated game servers.
 
 Currently only implemented to work on Google Cloud Platform, through its [Container Engine API](https://cloud.google.com/container-engine/reference/rest/) 
 and [Compute Engine Instance Group Manager API](https://cloud.google.com/compute/docs/reference/latest/instanceGroupManagers), 
