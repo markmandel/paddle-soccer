@@ -169,7 +169,7 @@ func (s *Server) Start() error {
 			case <-quit:
 				return
 			case <-gw.events:
-				log.Print("[Info][Scaling] Recieved Add Event, Scaling...")
+				log.Print("[Info][Scaling] Received Event, Scaling...")
 				if err := s.scaleNodes(); err != nil {
 					log.Printf("[Error][Scaling] %+v", err)
 				}
