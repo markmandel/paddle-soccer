@@ -41,9 +41,14 @@ All the non-Unity server side code is found in the `server` folder.
 
 ### Infrastructure
 
-This project works on Kubernetes [1.6.0](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG.md#v160) or higher, as it uses Kubernetes [Node Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity-beta-feature).
+This project works on Kubernetes [1.6.0](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG.md#v160) or higher, 
+as it uses Kubernetes [Node Affinity](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#node-affinity-beta-feature).
 
-If you have a [Google Cloud Platform](https://cloud.google.com/) Project configured and the [Google Cloud SDK](https://cloud.google.com/sdk/) installed, you can cd into the `infrastructure` folder, and run `make deploy` to deploy a 4 node cluster over 2 nodepools, as well as the accompanying firewall rules.  `make auth` will authenticate your local `kubectl` tooling with this cluster.
+If you have a [Google Cloud Platform](https://cloud.google.com/) Project configured and the [Google Cloud SDK](https://cloud.google.com/sdk/) installed 
+you can cd into the `infrastructure` folder, where you will find two possible infrastructure setup options `single` and `multi`. 
+
+- cd into `single` and run `make deploy` to deploy a single 4 node cluster over 2 nodepools, as well as the accompanying firewall rules.  `make auth` will authenticate your local `kubectl` tooling with this cluster.
+- cd into `multi` and run `make deploy` to deploy two 4 node clusters much as above, but spread between two disparate regions to enable demonstration of matchmaking based on latency. As above run `make auth` will authenticate your local `kubectl` tooling with both of these clusters.
 
 ### Node Pools
 - There are two [Node Pools](https://cloud.google.com/container-engine/docs/node-pools) withing this cluster. 

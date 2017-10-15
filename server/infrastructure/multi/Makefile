@@ -23,9 +23,11 @@
 #     \_/ \__,_|_|  |_|\__,_|_.__/|_|\___|___/
 #
 
-ZONE=us-west1-b
-NAME=soccer-infrastructure
-CLUSTER_NAME=soccer-$(ZONE)
+ZONE1=us-west1-b
+ZONE2=us-west1-b
+NAME=soccer-multi
+CLUSTER_NAME1=soccer-multi-$(ZONE)
+CLUSTER_NAME2=soccer-multi-$(ZONE)
 SIZE=2
 
 #   _____                    _
@@ -37,12 +39,13 @@ SIZE=2
 
 # Create kubernetes cluster
 deploy:
-	gcloud deployment-manager deployments create $(NAME) --config cluster.yml.jinja \
-		--properties zone:$(ZONE)
+	gcloud deployment-manager deployments create $(NAME) --template cluster.yml.jinja \
+		--properties zone1:$(ZONE1) zone2:$(ZONE2)
 
 # Deletes entire deployment
 clean:
 	gcloud deployment-manager deployments delete $(NAME)
+	rm -r ~/.kube
 
 # Sets up the auth for kubectl k8s on the given cluster
 auth:
