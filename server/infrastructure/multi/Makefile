@@ -28,7 +28,6 @@ ZONE2=australia-southeast1-c
 NAME=soccer-multi
 CLUSTER_NAME1=soccer-multi-$(ZONE1)
 CLUSTER_NAME2=soccer-multi-$(ZONE2)
-SIZE=2
 
 #   _____                    _
 #  |_   _|_ _ _ __ __ _  ___| |_ ___
@@ -44,16 +43,17 @@ deploy:
 
 # Deletes entire deployment
 clean:
-	rm -r ~/.kube/*
+	-rm -r ~/.kube/*
 	gcloud deployment-manager deployments delete $(NAME)
 
 # Sets up the auth for kubectl k8s on the given cluster
-auth:
-	gcloud config unset compute/zone
-	gcloud config unset container/cluster
+auth: set-defaults
 	gcloud container clusters get-credentials $(CLUSTER_NAME1) --zone=$(ZONE1)
 	gcloud container clusters get-credentials $(CLUSTER_NAME2) --zone=$(ZONE2)
 
-# resize the game server nodepool
-resize-game-server:
-	gcloud container clusters resize $(CLUSTER_NAME) --node-pool=game-servers --size=$(SIZE)
+context: set-defaults
+	 gcloud container clusters list --filter='resourceLabels.role:*' --uri --format=value(uri()) | awk -F/ '{print "gke_"$$6"_"$$8"_"$$10 }' | xargs kubectl config use-context
+
+set-defaults:
+	gcloud config unset compute/zone
+	gcloud config unset container/cluster
