@@ -54,7 +54,7 @@ resize-game-server:
 	gcloud container clusters resize $(CLUSTER_NAME) --node-pool=game-servers --size=$(SIZE)
 
 context: set-defaults
-	 gcloud container clusters list --filter='-resourceLabels.role:*' --uri --format=object | awk -F/ '{print "gke_"$$6"_"$$8"_"$$10 }' | xargs kubectl config use-context
+	 gcloud container clusters list --filter='resourceLabels.game-servers:single' --uri --format=object | awk -F/ '{print "gke_"$$6"_"$$8"_"$$10 }' | xargs kubectl config use-context
 
 set-defaults:
 	gcloud config set container/cluster $(CLUSTER_NAME)

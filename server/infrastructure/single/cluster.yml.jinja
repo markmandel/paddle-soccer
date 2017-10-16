@@ -20,7 +20,9 @@ resources:
     zone: {{ properties["zone"] }}
     cluster:
       name: {{ properties["cluster_name"] }}
-      description: side server cluster for soccer multiplayer, in zone {{ properties["zone"] }}
+      description: server side cluster for soccer multiplayer, in zone {{ properties["zone"] }}
+      resourceLabels:
+        game-servers: single
       nodePools:
         - name: "apps"
           initialNodeCount: 3

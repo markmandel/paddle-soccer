@@ -52,7 +52,7 @@ auth: set-defaults
 	gcloud container clusters get-credentials $(CLUSTER_NAME2) --zone=$(ZONE2)
 
 context: set-defaults
-	 gcloud container clusters list --filter='resourceLabels.role:*' --uri --format=value(uri()) | awk -F/ '{print "gke_"$$6"_"$$8"_"$$10 }' | xargs kubectl config use-context
+	 gcloud container clusters list --filter='resourceLabels.game-servers:multi' --uri --format=object | awk -F/ '{print "gke_"$$6"_"$$8"_"$$10 }' # | xargs kubectl config use-context
 
 set-defaults:
 	gcloud config unset compute/zone
