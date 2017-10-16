@@ -13,14 +13,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 #}
 
-resources:
-- name: soccer-{{ properties["zone"] }}
+{% macro cluster(zone, name) %}
+- name: soccer-multi-{{ zone }}
   type: container.v1.cluster
   properties:
-    zone: {{ properties["zone"] }}
+    zone: {{ zone }}
     cluster:
-      name: soccer-{{ properties["zone"] }}
-      description: side server cluster for soccer multiplayer, in zone {{ properties["zone"] }}
+      name: {{ name }}
+      description: side server cluster for soccer multiplayer, in zone {{ zone }}
+      resourceLabels:
+        role: game-servers
       nodePools:
         - name: "apps"
           initialNodeCount: 3
@@ -45,6 +47,11 @@ resources:
       masterAuth:
         username: admin
         password: supersecret
+{%  endmacro %}
+
+resources:
+{{ cluster(properties["zone1"], properties["cluster_name1"]) }}
+{{ cluster(properties["zone2"], properties["cluster_name2"]) }}
 - name: game-server-firewall
   type: compute.v1.firewall
   properties:

@@ -24,10 +24,10 @@
 #
 
 ZONE1=us-west1-b
-ZONE2=us-west1-b
+ZONE2=australia-southeast1-c
 NAME=soccer-multi
-CLUSTER_NAME1=soccer-multi-$(ZONE)
-CLUSTER_NAME2=soccer-multi-$(ZONE)
+CLUSTER_NAME1=soccer-multi-$(ZONE1)
+CLUSTER_NAME2=soccer-multi-$(ZONE2)
 SIZE=2
 
 #   _____                    _
@@ -40,18 +40,19 @@ SIZE=2
 # Create kubernetes cluster
 deploy:
 	gcloud deployment-manager deployments create $(NAME) --template cluster.yml.jinja \
-		--properties zone1:$(ZONE1) zone2:$(ZONE2)
+		--properties zone1:$(ZONE1),zone2:$(ZONE2),cluster_name1:$(CLUSTER_NAME1),cluster_name2:$(CLUSTER_NAME2)
 
 # Deletes entire deployment
 clean:
+	rm -r ~/.kube/*
 	gcloud deployment-manager deployments delete $(NAME)
-	rm -r ~/.kube
 
 # Sets up the auth for kubectl k8s on the given cluster
 auth:
-	gcloud config set container/cluster $(CLUSTER_NAME)
-	gcloud config set compute/zone $(ZONE)
-	gcloud container clusters get-credentials $(CLUSTER_NAME)
+	gcloud config unset compute/zone
+	gcloud config unset container/cluster
+	gcloud container clusters get-credentials $(CLUSTER_NAME1) --zone=$(ZONE1)
+	gcloud container clusters get-credentials $(CLUSTER_NAME2) --zone=$(ZONE2)
 
 # resize the game server nodepool
 resize-game-server:
