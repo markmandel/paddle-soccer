@@ -19,7 +19,8 @@ Once the game server has started, we use the combination of the Kubernetes API a
 - [Scaling Dedicated Game Servers with Kubernetes: Part 3 – Scaling Up Nodes](http://www.compoundtheory.com/scaling-dedicated-game-servers-with-kubernetes-part-3-scaling-up-nodes/)
 
 ## Presentations
-[![GDC Presentation](gdc.jpg)](http://www.gdcvault.com/play/1024328/)
+[![GCAP Australia](https://img.youtube.com/vi/a08WrvIPKMw/maxresdefault.jpg)](https://www.youtube.com/watch?v=a08WrvIPKMw&feature=youtu.be)   
+[![GDC](gdc.jpg)](http://www.gdcvault.com/play/1024328/)
 
 ## Unity Structure
 The unity source code can be found in the `unity` folder.
